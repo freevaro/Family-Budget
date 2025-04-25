@@ -1,6 +1,7 @@
 package com.example.tfg.views
 
 import android.annotation.SuppressLint
+import android.media.MediaPlayer
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Home
@@ -29,6 +31,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -41,6 +44,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
@@ -49,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.example.tfg.R
 import java.time.format.TextStyle
@@ -74,6 +79,24 @@ fun MainScreen(
     val fuenteprincipal = FontFamily(
         Font(R.font.barriecito_regular)
     )
+    val context = LocalContext.current
+    val mediaPlayer = remember {
+        MediaPlayer.create(context, R.raw.mainscreen).apply {
+            isLooping = true
+            start()
+        }
+    }
+    val isMusicOn = remember { mutableStateOf(true) }
+
+    // Limpieza cuando el Composable sale del árbol
+    DisposableEffect(Unit) {
+        onDispose {
+            mediaPlayer.stop()
+            mediaPlayer.release()
+        }
+    }
+
+
 
     val icons = remember {
         mutableStateOf(
@@ -86,6 +109,7 @@ fun MainScreen(
             }
         )
     }
+    val showDialog = remember { mutableStateOf(false) }
     val botonModifier = Modifier
         .padding(horizontal = (totalWidth * 0.15f).dp, vertical = 10.dp)
         .fillMaxWidth()
@@ -176,9 +200,88 @@ fun MainScreen(
 
                 Spacer(modifier = Modifier.height(20.dp))
 
+                if (showDialog.value) {
+                    Dialog(onDismissRequest = { showDialog.value = false }) {
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(20.dp))
+                                .background(Color(0xFF9CCD5C))
+                                .padding(24.dp)
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    "Opciones",
+                                    fontSize = 30.sp,
+                                    fontFamily = fuenteprincipal,
+                                    color = Color.Black
+                                )
+                                Spacer(modifier = Modifier.height(20.dp))
+
+                                // 🔊 Switch para el sonido
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        "🔊 Sonido:",
+                                        fontSize = 20.sp,
+                                        fontFamily = fuenteprincipal,
+                                        color = Color.Black
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    androidx.compose.material3.Switch(
+                                        checked = isMusicOn.value,
+                                        onCheckedChange = { checked ->
+                                            isMusicOn.value = checked
+                                            if (checked) {
+                                                mediaPlayer.start()
+                                            } else {
+                                                mediaPlayer.pause()
+                                            }
+                                        }
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.height(10.dp))
+
+                                Text("🌐 Idioma: Español",
+                                    fontSize = 20.sp,
+                                    fontFamily = fuenteprincipal,
+                                    color = Color.Black
+                                )
+
+                                Spacer(modifier = Modifier.height(30.dp))
+
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Color(0xFF759E73))
+                                        .clickable {
+                                            showDialog.value = false
+                                        }
+                                        .padding(horizontal = 20.dp, vertical = 10.dp)
+                                ) {
+                                    Text(
+                                        "Cerrar",
+                                        fontSize = 18.sp,
+                                        fontFamily = fuenteprincipal,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                }
+
+
+
                 Box(
                     modifier = botonModifier
-                        .clickable { /* Acción para Opciones */ },
+                        .clickable {
+                            showDialog.value = true
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
