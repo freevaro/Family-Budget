@@ -53,6 +53,8 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.ContextCompat
 import androidx.compose.ui.graphics.ImageShader
+import androidx.compose.ui.text.font.Font
+import androidx.compose.ui.text.font.FontFamily
 
 @Composable
 fun GameHomeScreen(
@@ -80,6 +82,9 @@ fun GameHomeScreen(
         }
     }
     val isMusicOn = remember { mutableStateOf(true) }
+    val fuenteprincipal = FontFamily(
+        Font(R.font.barriecito_regular)
+    )
 
     Box(
         modifier = Modifier
@@ -100,6 +105,7 @@ fun GameHomeScreen(
                 color = darkGreen,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
+                fontFamily = fuenteprincipal,
                 modifier = Modifier.padding(top = 16.dp, bottom = 24.dp)
             )
 
@@ -119,6 +125,7 @@ fun GameHomeScreen(
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
+                        fontFamily = fuenteprincipal,
                         modifier = Modifier
                             .padding(vertical = 12.dp)
                             .fillMaxWidth()
@@ -133,7 +140,7 @@ fun GameHomeScreen(
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(8.dp),
+                        modifier = Modifier.padding(8.dp).fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
@@ -145,13 +152,10 @@ fun GameHomeScreen(
                         Text(
                             text = "Día $currentDay",
                             color = Color.White,
+                            fontFamily = fuenteprincipal,
                             fontSize = 14.sp
                         )
-                        Text(
-                            text = "de $totalDays",
-                            color = Color.White,
-                            fontSize = 12.sp
-                        )
+
                     }
                 }
             }
@@ -181,7 +185,7 @@ fun GameHomeScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Text("FINALIZAR TURNO", fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Text("FINALIZAR TURNO", fontSize = 18.sp, fontWeight = FontWeight.Bold, fontFamily = fuenteprincipal)
             }
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -225,6 +229,9 @@ fun FinancialStatRow(
     label: String,
     value: String
 ) {
+    val fuenteprincipal = FontFamily(
+        Font(R.font.barriecito_regular)
+    )
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -243,6 +250,7 @@ fun FinancialStatRow(
         Text(
             text = label,
             fontSize = 16.sp,
+            fontFamily = fuenteprincipal,
             color = Color(0xFF6B9A2F),
             modifier = Modifier.weight(1f)
         )
@@ -251,6 +259,7 @@ fun FinancialStatRow(
             text = value,
             fontSize = 18.sp,
             fontWeight = FontWeight.Bold,
+            fontFamily = fuenteprincipal,
             color = Color(0xFF6B9A2F)
         )
     }
@@ -269,6 +278,7 @@ fun BottomNavigationBar(
         modifier = modifier.fillMaxWidth(),
         color = Color(0xFF6B9A2F),
         shadowElevation = 8.dp
+
     ) {
         Row(
             modifier = Modifier
@@ -276,11 +286,11 @@ fun BottomNavigationBar(
                 .padding(8.dp),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
+
             BottomNavItem(
-                icon = Icons.Default.Home,
-                label = "Inicio",
-                onClick = onNavigateToHome,
-                isSelected = true
+                icon = Icons.Default.ShoppingCart,
+                label = "Tienda",
+                onClick = onNavigateToShop
             )
 
             BottomNavItem(
@@ -290,15 +300,16 @@ fun BottomNavigationBar(
             )
 
             BottomNavItem(
-                icon = Icons.Default.CalendarMonth,
-                label = "Calendario",
-                onClick = onNavigateToCalendar
+                icon = Icons.Default.Home,
+                label = "Inicio",
+                onClick = onNavigateToHome,
+                isSelected = true
             )
 
             BottomNavItem(
-                icon = Icons.Default.ShoppingCart,
-                label = "Tienda",
-                onClick = onNavigateToShop
+                icon = Icons.Default.CalendarMonth,
+                label = "Calendario",
+                onClick = onNavigateToCalendar
             )
 
             BottomNavItem(
@@ -320,6 +331,9 @@ fun BottomNavItem(
     isSelected: Boolean = false
 ) {
     val itemColor = if (isSelected) Color.White else Color.White.copy(alpha = 0.7f)
+    val fuenteprincipal = FontFamily(
+        Font(R.font.barriecito_regular)
+    )
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -340,6 +354,7 @@ fun BottomNavItem(
             text = label,
             color = itemColor,
             fontSize = 12.sp,
+            fontFamily = fuenteprincipal,
             textAlign = TextAlign.Center
         )
     }
