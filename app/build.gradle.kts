@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
-    //PLUGINS ROOM
     alias(libs.plugins.ksp)
 }
 
@@ -42,14 +41,38 @@ android {
 }
 
 dependencies {
+    // 1) ¡El BOM al principio! Así todas las versiones de Compose se alinean.
+    implementation(platform(libs.androidx.compose.bom))
 
+    // 2) Resto de dependencias
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
+
+    // 3) Foundation (aquí están Canvas, background, etc.)
+    implementation("androidx.compose.foundation:foundation")
+
+    // 4) Core UI y gráficos (drawscope, drawPainter…)
+    implementation(libs.androidx.ui)              // androidx.compose.ui:ui
+    implementation(libs.androidx.ui.graphics)     // androidx.compose.ui:ui-graphics
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+
+    // Navegación, iconos, Room, ViewModel…
+    implementation(libs.androidx.navigation.compose)
+    implementation("androidx.compose.material:material-icons-extended:1.5.0")
+
+    // ROOM
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.runtime.android)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.room.ktx)
+
+    // MVVM / ViewModel
+    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.viewmodel.compose)
+    implementation(libs.androidx.compose.runtime.livedata)
+
+    // Tests
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -57,15 +80,4 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation(libs.androidx.navigation.compose)
-
-    //DEPENDENCIAS ROOM
-    implementation(libs.androidx.room.runtime)
-    ksp(libs.androidx.room.compiler)
-    implementation(libs.androidx.room.ktx)
-
-    //DEPENDENCIAS VIEW MODEL (MVVM)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.compose.runtime.livedata)
 }

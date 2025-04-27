@@ -187,7 +187,8 @@ fun MainScreen(
             ) {
                 Box(
                     modifier = botonModifier
-                        .clickable { /* Acción para Jugar */ },
+                        .clickable {navController.navigate("pantalla_juego")
+                        },
                     contentAlignment = Alignment.Center
                 ) {
                     Text(

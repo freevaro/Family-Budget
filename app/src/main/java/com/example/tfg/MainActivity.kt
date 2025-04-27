@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.tfg.ui.theme.TFGTheme
+import com.example.tfg.views.GameHomeScreen
 import com.example.tfg.views.LoadingScreen
 import com.example.tfg.views.MainScreen
 
@@ -39,6 +40,36 @@ class MainActivity : ComponentActivity() {
                         composable("pantalla_principal") {
                             MainScreen(Modifier.padding(innerPadding), navController)
                         }
+                        composable("pantalla_juego") {
+                            GameHomeScreen(
+                                playerName = "David",
+                                currentDay = 7,
+                                totalDays = 30,
+                                cash = 600,
+                                passiveIncome = 80,
+                                dailyExpenses = 50,
+                                onEndTurnClick = {
+                                    navController.navigate("pantalla_evento")
+                                },
+                                onNavigateToHome = {
+                                    navController.navigate("pantalla_principal")
+                                },
+                                onNavigateToBusiness = {
+                                    // Navegación o lógica correspondiente
+                                },
+                                onNavigateToCalendar = {
+                                    // Navegación o lógica correspondiente
+                                },
+                                onNavigateToShop = {
+                                    // Navegación o lógica correspondiente
+                                },
+                                onNavigateToSettings = {
+                                    // Navegación o lógica correspondiente
+                                }
+                            )
+                        }
+
+
                     }
 
 
