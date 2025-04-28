@@ -102,17 +102,18 @@ fun GameHomeScreen(
         ) {
             Text(
                 text = "FAMILY BUDGET",
-                color = darkGreen,
+                color = Color.Black,
                 fontSize = 28.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = fuenteprincipal,
-                modifier = Modifier.padding(top = 16.dp, bottom = 24.dp)
+                modifier = Modifier.padding(top = 60.dp, bottom = 24.dp)
             )
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 24.dp),
+                    .padding(bottom = 24.dp)
+                    .offset(y = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Card(
@@ -121,7 +122,7 @@ fun GameHomeScreen(
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Text(
-                        text = playerName,
+                        text = "Turno de "+playerName,
                         fontSize = 24.sp,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
@@ -163,7 +164,8 @@ fun GameHomeScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 32.dp),
+                    .padding(bottom = 32.dp)
+                    .offset(y = 10.dp),
                 colors = CardDefaults.cardColors(containerColor = lightGreen.copy(alpha = 0.7f)),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -181,7 +183,8 @@ fun GameHomeScreen(
                 onClick = onEndTurnClick,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(60.dp),
+                    .height(90.dp)
+                    .offset(y = 10.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
                 shape = RoundedCornerShape(16.dp)
             ) {
