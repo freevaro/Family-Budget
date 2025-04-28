@@ -60,7 +60,6 @@ dependencies {
     // Navegación, iconos, Room, ViewModel…
     implementation(libs.androidx.navigation.compose)
     implementation("androidx.compose.material:material-icons-extended:1.5.0")
-    implementation("com.google.accompanist:accompanist-navigation-animation:0.33.2-alpha") // Usa la última versión estable
 
     // ROOM
     implementation(libs.androidx.room.runtime)
