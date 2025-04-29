@@ -1,63 +1,51 @@
 package com.example.tfg.views
 
-import BottomNavItem
-import BottomNavigationBar
-import com.example.tfg.*
-import android.graphics.Shader
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.TrendingDown
+import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Divider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import com.example.tfg.R
-import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.remember
-import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.ImageShader
-import androidx.compose.ui.graphics.ShaderBrush
-import androidx.compose.ui.graphics.TileMode
-import androidx.compose.ui.graphics.drawscope.draw
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
-import androidx.compose.ui.res.imageResource
-import androidx.compose.ui.res.vectorResource
-import androidx.room.util.copy
-import android.graphics.Bitmap
-import android.media.MediaPlayer
-import android.graphics.Canvas as AndroidCanvas
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.res.painterResource
-import androidx.compose.runtime.*
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat
-import androidx.compose.ui.graphics.ImageShader
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.navigation.NavHostController
+import com.example.tfg.R
 
 @Composable
 fun GameHomeScreen(
@@ -73,8 +61,11 @@ fun GameHomeScreen(
     onNavigateToCalendar: () -> Unit = {},
     onNavigateToShop: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
+    navController: NavHostController,
+    musicEnabled: Boolean,
+    onMusicToggle: (Boolean)-> Unit
 ) {
-
+    val showDialog = remember { mutableStateOf(false) }
     val primaryGreen = Color(0xFF9CCD5C)
     val darkGreen = Color(0xFF6B9A2F)
     val lightGreen = Color(0xFFB5E878)
@@ -97,14 +88,26 @@ fun GameHomeScreen(
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(
-                text = "FAMILY BUDGET",
-                color = Color.Black,
-                fontSize = 28.sp,
-                fontWeight = FontWeight.Bold,
-                fontFamily = fuenteprincipal,
-                modifier = Modifier.padding(top = 60.dp, bottom = 24.dp)
-            )
+            Row {
+                Text(
+                    text = "FAMILY BUDGET",
+                    color = Color.Black,
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = fuenteprincipal,
+                    modifier = Modifier.padding(top = 60.dp, bottom = 24.dp, start = 99.dp)
+                )
+
+                IconButton(
+                    onClick = { showDialog.value = true },
+                    modifier = Modifier.padding(top = 63.dp, bottom = 24.dp, start = 63.dp).size(27.dp)
+                ){
+                Icon(
+                    imageVector = Icons.Default.Settings,
+                    contentDescription = ""
+                )
+                }
+            }
 
             Row(
                 modifier = Modifier
@@ -192,6 +195,75 @@ fun GameHomeScreen(
         }
 
     }
+    if (showDialog.value) {
+        Dialog(onDismissRequest = { showDialog.value = false }) {
+            Box(
+                modifier = Modifier
+                    .clip(RoundedCornerShape(20.dp))
+                    .background(Color(0xFF9CCD5C))
+                    .padding(24.dp)
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        "Opciones",
+                        fontSize = 30.sp,
+                        fontFamily = fuenteprincipal,
+                        color = Color.Black
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    // 🔊 Switch para el sonido
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            "🔊 Sonido:",
+                            fontSize = 20.sp,
+                            fontFamily = fuenteprincipal,
+                            color = Color.Black
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        androidx.compose.material3.Switch(
+                            checked = musicEnabled,
+                            onCheckedChange = { checked ->
+                                onMusicToggle(!musicEnabled)
+                            }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    Text("🌐 Idioma: Español (Proximamente...)",
+                        fontSize = 20.sp,
+                        fontFamily = fuenteprincipal,
+                        color = Color.Black
+                    )
+
+                    Spacer(modifier = Modifier.height(30.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(Color(0xFF759E73))
+                            .clickable {
+                                showDialog.value = false
+                            }
+                            .padding(horizontal = 20.dp, vertical = 10.dp)
+                    ) {
+                        Text(
+                            "Cerrar",
+                            fontSize = 18.sp,
+                            fontFamily = fuenteprincipal,
+                            color = Color.White
+                        )
+                    }
+                }
+            }
+        }
+
+    }
 }
 
 @Composable
@@ -255,13 +327,4 @@ fun FinancialStatRow(
             color = Color(0xFF6B9A2F)
         )
     }
-}
-
-
-
-
-@Preview(showBackground = true)
-@Composable
-fun GameHomeScreenPreview() {
-    GameHomeScreen()
 }

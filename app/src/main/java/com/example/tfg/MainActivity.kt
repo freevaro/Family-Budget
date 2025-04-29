@@ -156,7 +156,10 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToBusiness = { navController.navigate("pantalla_negocios") },
                                 onNavigateToCalendar = { navController.navigate("pantalla_calendario") },
                                 onNavigateToShop = { navController.navigate("pantalla_tienda") },
-                                onNavigateToSettings = { navController.navigate("pantalla_ajustes") }
+                                onNavigateToSettings = { navController.navigate("pantalla_ajustes") },
+                                navController = navController,
+                                musicEnabled = musicEnabled,
+                                onMusicToggle = { musicEnabled = it }
                             )
                         }
                         composable("pantalla_tienda") {

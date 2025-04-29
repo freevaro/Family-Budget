@@ -160,7 +160,9 @@ fun MainScreen(
                             fontSize = 45.sp)
 
                     }
+
                 }
+
             }
 
             Column(

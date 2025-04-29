@@ -10,6 +10,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.Icon
@@ -77,8 +78,8 @@ fun BottomNavigationBar(
             )
 
             BottomNavItem(
-                icon = Icons.Default.Settings,
-                label = "Opciones",
+                icon = Icons.Default.Inventory,
+                label = "Inventario",
                 onClick = onNavigateToSettings,
                 isSelected = currentScreen == "Opciones"
             )
