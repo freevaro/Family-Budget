@@ -1,5 +1,6 @@
 package com.example.tfg.views
 
+import BottomNavigationBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -149,15 +150,7 @@ fun ShopScreen(
         }
 
         // Barra de navegación inferior
-        BottomNavigationBar(
-            onNavigateToHome = onNavigateToHome,
-            onNavigateToBusiness = onNavigateToBusiness,
-            onNavigateToCalendar = onNavigateToCalendar,
-            onNavigateToShop = onNavigateToShop,
-            onNavigateToSettings = onNavigateToSettings,
-            currentScreen = "Tienda",
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
+
     }
 }
 

@@ -1,5 +1,6 @@
 package com.example.tfg.views
 
+import BottomNavigationBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -141,15 +142,6 @@ fun BusinessScreen(
         }
 
         // Barra de navegación inferior
-        BottomNavigationBar(
-            onNavigateToHome = onNavigateToHome,
-            onNavigateToBusiness = onNavigateToBusiness,
-            onNavigateToCalendar = onNavigateToCalendar,
-            onNavigateToShop = onNavigateToShop,
-            onNavigateToSettings = onNavigateToSettings,
-            currentScreen = "Negocios",
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
     }
 }
 
@@ -211,63 +203,3 @@ data class Business(
     val dailyIncome: Int,
     val icon: ImageVector
 )
-
-// Reutilizamos el BottomNavigationBar pero con un parámetro adicional para marcar la pantalla actual
-@Composable
-fun BottomNavigationBar(
-    onNavigateToHome: () -> Unit,
-    onNavigateToBusiness: () -> Unit,
-    onNavigateToCalendar: () -> Unit,
-    onNavigateToShop: () -> Unit,
-    onNavigateToSettings: () -> Unit,
-    currentScreen: String = "Inicio",
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = Color(0xFF6B9A2F),
-        shadowElevation = 8.dp
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-            BottomNavItem(
-                icon = Icons.Default.ShoppingCart,
-                label = "Tienda",
-                onClick = onNavigateToShop,
-                isSelected = currentScreen == "Tienda"
-            )
-
-            BottomNavItem(
-                icon = Icons.Default.Business,
-                label = "Negocios",
-                onClick = onNavigateToBusiness,
-                isSelected = currentScreen == "Negocios"
-            )
-
-            BottomNavItem(
-                icon = Icons.Default.Home,
-                label = "Inicio",
-                onClick = onNavigateToHome,
-                isSelected = currentScreen == "Inicio"
-            )
-
-            BottomNavItem(
-                icon = Icons.Default.CalendarMonth,
-                label = "Calendario",
-                onClick = onNavigateToCalendar,
-                isSelected = currentScreen == "Calendario"
-            )
-
-            BottomNavItem(
-                icon = Icons.Default.Settings,
-                label = "Opciones",
-                onClick = onNavigateToSettings,
-                isSelected = currentScreen == "Opciones"
-            )
-        }
-    }
-}

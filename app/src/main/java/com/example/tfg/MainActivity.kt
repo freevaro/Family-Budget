@@ -1,11 +1,10 @@
 package com.example.tfg
 
+import BottomNavigationBar
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -17,26 +16,62 @@ import com.example.tfg.ui.theme.TFGTheme
 import com.example.tfg.views.*
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.Color
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavBackStackEntry
+
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // 1) Hacer que el contenido flote bajo la barra de estado
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        // 2) Pintar la status bar
+        window.statusBarColor = 0xFF6B9A2F.toInt()
+        WindowInsetsControllerCompat(window, window.decorView)
+            .isAppearanceLightStatusBars = false
         setContent {
             TFGTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    val navController: NavHostController = rememberNavController()
-                    val screenOrder = listOf(
-                        "pantalla_tienda",
-                        "pantalla_negocios",
-                        "pantalla_juego", // Inicio
-                        "pantalla_calendario",
-                        "pantalla_ajustes"
-                    )
+                val navController: NavHostController = rememberNavController()
+                val screenOrder = listOf(
+                    "pantalla_tienda",
+                    "pantalla_negocios",
+                    "pantalla_juego", // Inicio
+                    "pantalla_calendario",
+                    "pantalla_ajustes"
+                )
 
-                    var currentScreen by rememberSaveable { mutableStateOf("pantalla_juego") }
+                var currentScreen by rememberSaveable { mutableStateOf("pantalla_juego") }
+                Scaffold(modifier = Modifier.fillMaxSize().systemBarsPadding(),
+                    containerColor = Color(0xFF6B9A2F),
+                    bottomBar = {
+                        BottomNavigationBar(
+                            onNavigateToHome = {navController.navigate("pantalla_juego")}
+                            ,
+                            onNavigateToBusiness = {
+                                navController.navigate("pantalla_negocios")
+                            },
+                            onNavigateToCalendar = {
+                                navController.navigate("pantalla_calendario")
+                            },
+                            onNavigateToShop = {
+                                navController.navigate("pantalla_tienda")
+                            },
+                            onNavigateToSettings = {
+                                navController.navigate("pantalla_ajustes")
+                            },
+                            currentScreen = currentScreen,
+                            modifier = Modifier
+                        )
+                    }) { innerPadding ->
+
+
+
 
                     NavHost(
                         navController = navController,

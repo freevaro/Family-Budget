@@ -1,5 +1,6 @@
 package com.example.tfg.views
 
+import BottomNavigationBar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
@@ -63,14 +64,6 @@ fun SettingsScreen(
             )
         }
 
-        BottomNavigationBar(
-            onNavigateToHome = onNavigateToHome,
-            onNavigateToBusiness = onNavigateToBusiness,
-            onNavigateToCalendar = onNavigateToCalendar,
-            onNavigateToShop = onNavigateToShop,
-            onNavigateToSettings = onNavigateToSettings,
-            currentScreen = "Opciones",
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
+
     }
 }

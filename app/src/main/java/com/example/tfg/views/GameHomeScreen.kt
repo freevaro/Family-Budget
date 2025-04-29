@@ -1,5 +1,7 @@
 package com.example.tfg.views
 
+import BottomNavItem
+import BottomNavigationBar
 import android.graphics.Shader
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -194,14 +196,6 @@ fun GameHomeScreen(
             Spacer(modifier = Modifier.height(24.dp))
         }
 
-        BottomNavigationBar(
-            onNavigateToHome,
-            onNavigateToBusiness,
-            onNavigateToCalendar,
-            onNavigateToShop,
-            onNavigateToSettings,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
     }
 }
 
@@ -268,100 +262,8 @@ fun FinancialStatRow(
     }
 }
 
-@Composable
-fun BottomNavigationBar(
-    onNavigateToHome: () -> Unit,
-    onNavigateToBusiness: () -> Unit,
-    onNavigateToCalendar: () -> Unit,
-    onNavigateToShop: () -> Unit,
-    onNavigateToSettings: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    Surface(
-        modifier = modifier.fillMaxWidth(),
-        color = Color(0xFF6B9A2F),
-        shadowElevation = 8.dp
-
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly
-        ) {
-
-            BottomNavItem(
-                icon = Icons.Default.ShoppingCart,
-                label = "Tienda",
-                onClick = onNavigateToShop
-            )
-
-            BottomNavItem(
-                icon = Icons.Default.Business,
-                label = "Negocios",
-                onClick = onNavigateToBusiness
-            )
-
-            BottomNavItem(
-                icon = Icons.Default.Home,
-                label = "Inicio",
-                onClick = onNavigateToHome,
-                isSelected = true
-            )
-
-            BottomNavItem(
-                icon = Icons.Default.CalendarMonth,
-                label = "Calendario",
-                onClick = onNavigateToCalendar
-            )
-
-            BottomNavItem(
-                icon = Icons.Default.Settings,
-                label = "Opciones",
-                onClick = onNavigateToSettings
-            )
-        }
-    }
-}
 
 
-
-@Composable
-fun BottomNavItem(
-    icon: androidx.compose.ui.graphics.vector.ImageVector,
-    label: String,
-    onClick: () -> Unit,
-    isSelected: Boolean = false
-) {
-    val itemColor = if (isSelected) Color.White else Color.White.copy(alpha = 0.7f)
-    val fuenteprincipal = FontFamily(
-        Font(R.font.barriecito_regular)
-    )
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .padding(8.dp)
-            .clip(RoundedCornerShape(12.dp))
-            .clickable(onClick = onClick)
-            .padding(4.dp)
-    ) {
-        Icon(
-            imageVector = icon,
-            contentDescription = label,
-            tint = itemColor,
-            modifier = Modifier.size(24.dp)
-        )
-
-        Text(
-            text = label,
-            color = itemColor,
-            fontSize = 12.sp,
-            fontFamily = fuenteprincipal,
-            textAlign = TextAlign.Center
-        )
-    }
-}
 
 @Preview(showBackground = true)
 @Composable
