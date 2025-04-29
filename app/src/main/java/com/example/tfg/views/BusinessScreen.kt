@@ -86,43 +86,9 @@ fun BusinessScreen(
                 fontWeight = FontWeight.Bold,
                 fontFamily = fuenteprincipal,
                 modifier = Modifier
-                    .padding(top = 60.dp, bottom = 16.dp)
+                    .padding(top = 60.dp, bottom = 75.dp)
                     .align(Alignment.CenterHorizontally)
             )
-
-            // Barra de búsqueda
-            OutlinedTextField(
-                value = "",
-                onValueChange = {},
-                placeholder = { Text("Buscar negocios", fontFamily = fuenteprincipal) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Buscar") },
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    containerColor = lightGreen.copy(alpha = 0.7f),
-                    unfocusedBorderColor = darkGreen
-                ),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-            )
-
-            // Categorías
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(5),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-            ) {
-                items(categories) { category ->
-                    CategoryChip(
-                        category = category,
-                        isSelected = category == selectedCategory,
-                        onClick = { selectedCategory = category },
-                        fuenteprincipal = fuenteprincipal,
-                        darkGreen = darkGreen,
-                        lightGreen = lightGreen
-                    )
-                }
-            }
 
             // Negocios
             LazyVerticalGrid(

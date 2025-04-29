@@ -95,7 +95,7 @@ fun GameHomeScreen(
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     fontFamily = fuenteprincipal,
-                    modifier = Modifier.padding(top = 60.dp, bottom = 24.dp, start = 99.dp)
+                    modifier = Modifier.padding(top = 60.dp, bottom = 75.dp, start = 99.dp)
                 )
 
                 IconButton(
