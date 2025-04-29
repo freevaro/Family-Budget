@@ -173,7 +173,7 @@ fun MainScreen(
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
                             fontFamily = fuenteprincipal,
-                            fontSize = 50.sp)
+                            fontSize = 45.sp)
 
                     }
                 }
