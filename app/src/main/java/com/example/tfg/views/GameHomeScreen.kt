@@ -2,6 +2,7 @@ package com.example.tfg.views
 
 import BottomNavItem
 import BottomNavigationBar
+import com.example.tfg.*
 import android.graphics.Shader
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
@@ -71,19 +72,22 @@ fun GameHomeScreen(
     onNavigateToBusiness: () -> Unit = {},
     onNavigateToCalendar: () -> Unit = {},
     onNavigateToShop: () -> Unit = {},
-    onNavigateToSettings: () -> Unit = {}
+    onNavigateToSettings: () -> Unit = {},
 ) {
+
     val primaryGreen = Color(0xFF9CCD5C)
     val darkGreen = Color(0xFF6B9A2F)
     val lightGreen = Color(0xFFB5E878)
     val context = LocalContext.current
-    val mediaPlayer = remember {
-        MediaPlayer.create(context, R.raw.background).apply {
-            isLooping = true
-            start()
+    if (!MainActivity.comprobanteMusica) {
+        val mediaPlayer = remember {
+            MediaPlayer.create(context, R.raw.background).apply {
+                isLooping = true
+                MainActivity.comprobanteMusica = true
+                start()
+            }
         }
     }
-    val isMusicOn = remember { mutableStateOf(true) }
     val fuenteprincipal = FontFamily(
         Font(R.font.barriecito_regular)
     )

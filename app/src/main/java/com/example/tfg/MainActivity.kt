@@ -29,16 +29,23 @@ import androidx.navigation.NavController
 
 class MainActivity : ComponentActivity() {
     private lateinit var mediaPlayer: MediaPlayer
+    companion object{
+        var comprobanteMusica : Boolean = false
+    }
+
+//    fun getComprobante() : Boolean{
+//        return comprobanteMusica
+//    }
+//
+//    fun setComprobante(s : Boolean) {
+//        comprobanteMusica = s
+//    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        var current = "loading"
 
-        // Inicia la música de fondo solo una vez
-        mediaPlayer = MediaPlayer.create(this, R.raw.background).apply {
-            isLooping = true
-            start()
-        }
 
         // Configura la status bar
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -60,6 +67,7 @@ class MainActivity : ComponentActivity() {
                 )
 
                 var currentScreen by rememberSaveable { mutableStateOf("loading") }
+
 
                 Scaffold(
                     modifier = Modifier
@@ -101,6 +109,7 @@ class MainActivity : ComponentActivity() {
                             }
                         ) {
                             currentScreen = "pantalla_juego"
+                            current = "dentro"
                             GameHomeScreen(
                                 onEndTurnClick = {},
                                 onNavigateToHome = { navController.navigate("pantalla_juego") },
