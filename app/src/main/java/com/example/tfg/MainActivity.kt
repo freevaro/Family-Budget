@@ -1,13 +1,20 @@
 package com.example.tfg
 
 import BottomNavigationBar
+import android.media.MediaPlayer
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -16,68 +23,75 @@ import com.example.tfg.ui.theme.TFGTheme
 import com.example.tfg.views.*
 import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.*
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-import androidx.core.view.WindowCompat
-import androidx.core.view.WindowInsetsControllerCompat
-import androidx.navigation.NavBackStackEntry
-
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
+import androidx.navigation.NavController
 
 class MainActivity : ComponentActivity() {
+    private lateinit var mediaPlayer: MediaPlayer
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        // 1) Hacer que el contenido flote bajo la barra de estado
+
+        // Inicia la música de fondo solo una vez
+        mediaPlayer = MediaPlayer.create(this, R.raw.background).apply {
+            isLooping = true
+            start()
+        }
+
+        // Configura la status bar
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        // 2) Pintar la status bar
         window.statusBarColor = 0xFF6B9A2F.toInt()
         WindowInsetsControllerCompat(window, window.decorView)
             .isAppearanceLightStatusBars = false
+
         setContent {
             TFGTheme {
                 val navController: NavHostController = rememberNavController()
                 val screenOrder = listOf(
                     "pantalla_tienda",
                     "pantalla_negocios",
-                    "pantalla_juego", // Inicio
+                    "pantalla_juego",
                     "pantalla_calendario",
-                    "pantalla_ajustes"
+                    "pantalla_ajustes",
+                    "pantalla_principal",
+                    "loading"
                 )
 
-                var currentScreen by rememberSaveable { mutableStateOf("pantalla_juego") }
-                Scaffold(modifier = Modifier.fillMaxSize().systemBarsPadding(),
+                var currentScreen by rememberSaveable { mutableStateOf("loading") }
+
+                Scaffold(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .systemBarsPadding(),
                     containerColor = Color(0xFF6B9A2F),
                     bottomBar = {
-                        BottomNavigationBar(
-                            onNavigateToHome = {navController.navigate("pantalla_juego")}
-                            ,
-                            onNavigateToBusiness = {
-                                navController.navigate("pantalla_negocios")
-                            },
-                            onNavigateToCalendar = {
-                                navController.navigate("pantalla_calendario")
-                            },
-                            onNavigateToShop = {
-                                navController.navigate("pantalla_tienda")
-                            },
-                            onNavigateToSettings = {
-                                navController.navigate("pantalla_ajustes")
-                            },
-                            currentScreen = currentScreen,
-                            modifier = Modifier
-                        )
-                    }) { innerPadding ->
-
-
-
-
+                        if (currentScreen != "pantalla_principal" && currentScreen != "loading"){
+                                BottomNavigationBar(
+                                    onNavigateToHome = { navController.navigate("pantalla_juego") },
+                                    onNavigateToBusiness = { navController.navigate("pantalla_negocios") },
+                                    onNavigateToCalendar = { navController.navigate("pantalla_calendario") },
+                                    onNavigateToShop = { navController.navigate("pantalla_tienda") },
+                                    onNavigateToSettings = { navController.navigate("pantalla_ajustes") },
+                                    currentScreen = currentScreen
+                                )
+                        }
+                    }
+                ) { innerPadding ->
                     NavHost(
                         navController = navController,
-                        startDestination = "pantalla_juego",
+                        startDestination = "loading",
                         modifier = Modifier.padding(innerPadding)
                     ) {
+
+                        composable("loading"){
+                            LoadingScreen(modifier = Modifier,navController)
+                        }
+                        composable("pantalla_principal"){
+                            MainScreen(modifier = Modifier,navController)
+                            currentScreen = "pantalla_principal"
+                        }
                         composable("pantalla_juego",
                             enterTransition = {
                                 slideEnterTransition(currentScreen, "pantalla_juego", screenOrder)
@@ -89,21 +103,11 @@ class MainActivity : ComponentActivity() {
                             currentScreen = "pantalla_juego"
                             GameHomeScreen(
                                 onEndTurnClick = {},
-                                onNavigateToHome = {
-                                    navController.navigate("pantalla_juego")
-                                },
-                                onNavigateToBusiness = {
-                                    navController.navigate("pantalla_negocios")
-                                },
-                                onNavigateToCalendar = {
-                                    navController.navigate("pantalla_calendario")
-                                },
-                                onNavigateToShop = {
-                                    navController.navigate("pantalla_tienda")
-                                },
-                                onNavigateToSettings = {
-                                    navController.navigate("pantalla_ajustes")
-                                }
+                                onNavigateToHome = { navController.navigate("pantalla_juego") },
+                                onNavigateToBusiness = { navController.navigate("pantalla_negocios") },
+                                onNavigateToCalendar = { navController.navigate("pantalla_calendario") },
+                                onNavigateToShop = { navController.navigate("pantalla_tienda") },
+                                onNavigateToSettings = { navController.navigate("pantalla_ajustes") }
                             )
                         }
                         composable("pantalla_tienda",
@@ -171,9 +175,9 @@ class MainActivity : ComponentActivity() {
                                 onNavigateToBusiness = { navController.navigate("pantalla_negocios") },
                                 onNavigateToCalendar = { navController.navigate("pantalla_calendario") },
                                 onNavigateToShop = { navController.navigate("pantalla_tienda") },
-                                onNavigateToSettings = {}
+                                onNavigateToSettings = {},
+                                navController = navController
                             )
-
                         }
                     }
                 }
@@ -203,5 +207,11 @@ class MainActivity : ComponentActivity() {
         val toIndex = screenOrder.indexOf(to)
         val direction = if (fromIndex < toIndex) AnimatedContentTransitionScope.SlideDirection.Left else AnimatedContentTransitionScope.SlideDirection.Right
         return slideOutOfContainer(direction, animationSpec = tween(300))
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mediaPlayer.stop()
+        mediaPlayer.release()
     }
 }

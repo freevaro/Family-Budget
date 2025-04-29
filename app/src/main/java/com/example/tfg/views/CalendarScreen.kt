@@ -12,7 +12,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.tfg.R
 
+
 @Composable
 fun CalendarScreen(
     currentDay: Int = 10,
@@ -35,7 +41,8 @@ fun CalendarScreen(
     onNavigateToBusiness: () -> Unit = {},
     onNavigateToCalendar: () -> Unit = {},
     onNavigateToShop: () -> Unit = {},
-    onNavigateToSettings: () -> Unit = {}
+    onNavigateToSettings: () -> Unit = {},
+    modifier: Modifier = Modifier
 ) {
     val primaryGreen = Color(0xFF9CCD5C)
     val darkGreen = Color(0xFF6B9A2F)
@@ -46,7 +53,7 @@ fun CalendarScreen(
     val days = (1..totalDays).toList()
 
     Box(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxSize()
             .background(
                 Brush.verticalGradient(
@@ -88,7 +95,7 @@ fun CalendarScreen(
                 }
 
                 Text(
-                    text = "MAYO 2025",
+                    text = "MES 1",
                     color = Color.White,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Bold,
@@ -124,14 +131,15 @@ fun CalendarScreen(
                 }
             }
 
-            // Calendario
+            // Calendario con peso para que no empuje el Card fuera de pantalla
             LazyVerticalGrid(
                 columns = GridCells.Fixed(7),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp)
+                    .weight(1f)
+                    .padding(bottom = 8.dp)
             ) {
-                // Espacios vacíos para alinear el primer día (asumiendo que el mes comienza en miércoles)
+                // Espacios vacíos para alinear el primer día
                 items(2) {
                     Box(modifier = Modifier.size(48.dp))
                 }
@@ -151,8 +159,7 @@ fun CalendarScreen(
             // Información del día actual
             Card(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 16.dp),
+                    .fillMaxWidth().padding(bottom = 38.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = lightGreen.copy(alpha = 0.7f)
                 ),
@@ -178,7 +185,6 @@ fun CalendarScreen(
                         modifier = Modifier.padding(bottom = 8.dp)
                     )
 
-                    // Estadísticas
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         verticalAlignment = Alignment.CenterVertically
@@ -221,7 +227,7 @@ fun CalendarScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Default.TrendingDown,
-                            contentDescription = "Gastos",
+                            contentDescription = "Gastos diarios",
                             tint = darkGreen,
                             modifier = Modifier.size(20.dp)
                         )
@@ -235,9 +241,6 @@ fun CalendarScreen(
                 }
             }
         }
-
-        // Barra de navegación inferior
-
     }
 }
 
