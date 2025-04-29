@@ -68,7 +68,10 @@ data class FallingIcon(var x: Float, val speed: Float, var y: Float)
 @Composable
 
 fun MainScreen(
-    modifier: Modifier = Modifier, navController: NavController
+    modifier: Modifier = Modifier,
+    navController: NavController,
+    musicEnabled: Boolean,
+    onMusicToggle: (Boolean) -> Unit
 ) {
     val configuracion = LocalConfiguration.current
     val totalHeight = configuracion.screenHeightDp
@@ -79,25 +82,6 @@ fun MainScreen(
     val fuenteprincipal = FontFamily(
         Font(R.font.barriecito_regular)
     )
-    val context = LocalContext.current
-    val mediaPlayer = remember {
-        MediaPlayer.create(context, R.raw.mainscreen).apply {
-            isLooping = true
-            start()
-        }
-    }
-    val isMusicOn = remember { mutableStateOf(true) }
-
-    // Limpieza cuando el Composable sale del árbol
-    DisposableEffect(Unit) {
-        onDispose {
-            mediaPlayer.stop()
-            mediaPlayer.release()
-        }
-    }
-
-
-
     val icons = remember {
         mutableStateOf(
             List(100) {
@@ -232,21 +216,16 @@ fun MainScreen(
                                     )
                                     Spacer(modifier = Modifier.width(10.dp))
                                     androidx.compose.material3.Switch(
-                                        checked = isMusicOn.value,
+                                        checked = musicEnabled,
                                         onCheckedChange = { checked ->
-                                            isMusicOn.value = checked
-                                            if (checked) {
-                                                mediaPlayer.start()
-                                            } else {
-                                                mediaPlayer.pause()
-                                            }
+                                            onMusicToggle(!musicEnabled)
                                         }
                                     )
                                 }
 
                                 Spacer(modifier = Modifier.height(10.dp))
 
-                                Text("🌐 Idioma: Español",
+                                Text("🌐 Idioma: Español (Proximamente...)",
                                     fontSize = 20.sp,
                                     fontFamily = fuenteprincipal,
                                     color = Color.Black

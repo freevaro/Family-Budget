@@ -79,15 +79,6 @@ fun GameHomeScreen(
     val darkGreen = Color(0xFF6B9A2F)
     val lightGreen = Color(0xFFB5E878)
     val context = LocalContext.current
-    if (!MainActivity.comprobanteMusica) {
-        val mediaPlayer = remember {
-            MediaPlayer.create(context, R.raw.background).apply {
-                isLooping = true
-                MainActivity.comprobanteMusica = true
-                start()
-            }
-        }
-    }
     val fuenteprincipal = FontFamily(
         Font(R.font.barriecito_regular)
     )

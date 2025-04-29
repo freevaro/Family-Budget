@@ -23,13 +23,15 @@ import com.example.tfg.R
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
+
     onNavigateToHome: () -> Unit = {},
     onNavigateToBusiness: () -> Unit = {},
     onNavigateToCalendar: () -> Unit = {},
     onNavigateToShop: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
-    onEndGame: () -> Unit = {},
-    navController : NavHostController
+    navController : NavHostController,
+    musicEnabled: Boolean,
+    onMusicToggle: (Boolean)-> Unit
 ) {
     val primaryGreen = Color(0xFF9CCD5C)
     val darkGreen = Color(0xFF6B9A2F)
@@ -83,10 +85,9 @@ fun SettingsScreen(
                     modifier = Modifier.weight(1f)
                 )
                 Switch(
-                    checked = isMusicOn,
-                    onCheckedChange = { value ->
-                        isMusicOn = value
-                        // Aquí puedes pausar o reproducir música usando callback o mediaPlayer
+                    checked = musicEnabled,
+                    onCheckedChange = { checked ->
+                        onMusicToggle(!musicEnabled)
                     }
                 )
             }
