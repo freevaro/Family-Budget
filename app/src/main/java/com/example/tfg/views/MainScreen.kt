@@ -145,19 +145,18 @@ fun MainScreen(
         Column (modifier = Modifier.fillMaxSize()){
             Box(modifier = Modifier.fillMaxWidth().padding(top = Dimensions.heightPercentage(12f), start = Dimensions.widthPercentage(6f), end = Dimensions.widthPercentage(6f))){
                 Row(modifier = Modifier.fillMaxWidth()
-                        .padding(2.dp)
                         .border(width = 2.dp, color = Color(0x00727272), shape = MaterialTheme.shapes.medium)
                         .clip(RoundedCornerShape(12.dp))
                         .background(Color(0xFF9CCD5C)),
                     horizontalArrangement = Arrangement.Center){
                     Box(modifier = Modifier
-                        .padding(vertical = 20.dp, horizontal = 10.dp).fillMaxWidth()){
+                        .padding(vertical = Dimensions.heightPercentage(4f), horizontal = Dimensions.widthPercentage(2f)).fillMaxWidth()){
                         Text("FAMILY BUDGET",
                             color = Color(0xFF000000),
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
                             fontFamily = fuenteprincipal,
-                            fontSize = Dimensions.responsiveSp(50f)
+                            fontSize = 50.sp
                         )
 
                     }
@@ -169,7 +168,7 @@ fun MainScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = (totalHeight * 0.15f).dp),
+                    .padding(top = (totalHeight * 0.13f).dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Box(
@@ -186,7 +185,7 @@ fun MainScreen(
                     )
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
+
 
                 if (showDialog.value) {
                     Dialog(onDismissRequest = { showDialog.value = false }) {
@@ -194,7 +193,7 @@ fun MainScreen(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(20.dp))
                                 .background(Color(0xFF9CCD5C))
-                                .padding(24.dp)
+                                .padding(Dimensions.heightPercentage(3f))
                         ) {
                             Column(
                                 horizontalAlignment = Alignment.CenterHorizontally
@@ -230,6 +229,7 @@ fun MainScreen(
 
                                 Text("🌐 Idioma: Español (Proximamente...)",
                                     fontSize = 20.sp,
+                                    textAlign = TextAlign.Center,
                                     fontFamily = fuenteprincipal,
                                     color = Color.Black
                                 )
@@ -276,19 +276,19 @@ fun MainScreen(
                 }
             }
 
-            Box(modifier = Modifier.fillMaxWidth().offset(y = (totalHeight*0.38f).dp).padding(vertical = 10.dp)){
-                Row(modifier = Modifier.fillMaxWidth().background(Color(0xFF759E73)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.Center){
-                    Box(modifier = Modifier
-                        .size(60.dp)
-    //                    .border(width = 2.dp, color = Color(0xFF000000), shape = MaterialTheme.shapes.medium)
-                        .padding(6.dp)){
-                        OutlinedIconButton(onClick = {},
-                            ) {
-                            Icon(Icons.Default.Home, contentDescription = "")
-                        }
-                    }
-                }
-            }
+//            Box(modifier = Modifier.fillMaxWidth().offset(y = (totalHeight*0.38f).dp).padding(vertical = 10.dp)){
+//                Row(modifier = Modifier.fillMaxWidth().background(Color(0xFF759E73)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.Center){
+//                    Box(modifier = Modifier
+//                        .size(60.dp)
+//    //                    .border(width = 2.dp, color = Color(0xFF000000), shape = MaterialTheme.shapes.medium)
+//                        .padding(6.dp)){
+//                        OutlinedIconButton(onClick = {},
+//                            ) {
+//                            Icon(Icons.Default.Home, contentDescription = "")
+//                        }
+//                    }
+//                }
+//            }
         }
     }
 }
