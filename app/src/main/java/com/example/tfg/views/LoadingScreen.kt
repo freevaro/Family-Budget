@@ -1,12 +1,15 @@
 package com.example.tfg.views
 
+import androidx.annotation.Dimension
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -54,21 +57,27 @@ fun LoadingScreen(modifier: Modifier = Modifier, navController: NavController){
 
 
     Box(modifier = modifier.fillMaxSize().background(Color(0xFFc1ff72))){
-        Column (modifier = Modifier.fillMaxSize(),
+        Column (modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center){
-            Box(modifier = Modifier.offset(x = (totalWidth * 0f).dp, y = (totalHeight*-0.07f).dp).padding(Dimensions.widthPercentage(12.8f))){
+            verticalArrangement = Arrangement.spacedBy( // espacio fijo entre hijos
+                16.dp,
+                Alignment.CenterVertically
+            )){
+            Box(modifier = Modifier.offset(x = (totalWidth * 0f).dp, y = (totalHeight*-0.07f).dp).padding(start = Dimensions.widthPercentage(15f), top = Dimensions.heightPercentage(26f), end = Dimensions.widthPercentage(20f))){
                 Column (horizontalAlignment = Alignment.CenterHorizontally){
                     Text(
                         text = "Family Budget",
                         fontFamily = fuenteprincipal,
-                        fontSize = Dimensions.responsiveSp(30f), // 5% del tamaño base,
-                        modifier = Modifier.fillMaxWidth().padding(Dimensions.widthPercentage(15f)).align(Alignment.CenterHorizontally)
+                        fontSize = 30.sp,
+                        modifier = Modifier.fillMaxWidth().padding(start = Dimensions.widthPercentage(12f), top = Dimensions.heightPercentage(10f)).align(Alignment.CenterHorizontally)
                     )
                     Image(
                         painter = painterResource(id = R.drawable.dollar),
                         contentDescription = "Dollar",
-                        modifier = Modifier.size(95.dp).offset(x = (totalWidth * 0f).dp, y = (totalHeight*-0.04f).dp)
+                        modifier = Modifier
+                            .padding(start = Dimensions.widthPercentage(3f), top = Dimensions.heightPercentage(6f), bottom = Dimensions.heightPercentage(8f))
+                            .fillMaxWidth(0.4f)              // 40% del ancho para la imagen
+                            .aspectRatio(1f)
                     )
                     LaunchedEffect(Unit) {
                         loading = true
@@ -76,13 +85,16 @@ fun LoadingScreen(modifier: Modifier = Modifier, navController: NavController){
                             loadProgress { progress ->
                                 currentProgress = progress
                             }
-//                            navController.navigate("pantalla_principal")
+                            navController.navigate("pantalla_principal")
                         }
                     }
                     if (loading) {
                         LinearProgressIndicator(
                             progress = { currentProgress },
-                            modifier = Modifier.fillMaxWidth().offset(x = (totalWidth * 0f).dp, y = (totalHeight*0.05f).dp),
+                            modifier = Modifier
+                                .padding(start = Dimensions.widthPercentage(5f))
+                                .fillMaxWidth()                  // llena esa columna (80% pantalla)
+                                .height(4.dp),
                             color = Color(0xFF38A37F)
                         )
                     }
