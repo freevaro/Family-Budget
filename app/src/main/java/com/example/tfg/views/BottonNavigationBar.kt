@@ -25,8 +25,8 @@ import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.tfg.R
+import com.example.tfg.views.Dimensions
 
 @Composable
 fun BottomNavigationBar(
@@ -41,12 +41,12 @@ fun BottomNavigationBar(
     Surface(
         modifier = modifier.fillMaxWidth(),
         color = Color(0xFF6B9A2F),
-        shadowElevation = 8.dp
+        shadowElevation = Dimensions.heightPercentage(1f)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(Dimensions.heightPercentage(1f)),
             horizontalArrangement = Arrangement.SpaceEvenly
         ) {
             BottomNavItem(
@@ -102,22 +102,22 @@ fun BottomNavItem(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .padding(8.dp)
-            .clip(RoundedCornerShape(12.dp))
+            .padding(Dimensions.widthPercentage(2f))
+            .clip(RoundedCornerShape(Dimensions.widthPercentage(3f)))
             .clickable(onClick = onClick)
-            .padding(4.dp)
+            .padding(Dimensions.widthPercentage(1f))
     ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
             tint = itemColor,
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(Dimensions.widthPercentage(6f))
         )
 
         Text(
             text = label,
             color = itemColor,
-            fontSize = 12.sp,
+            fontSize = Dimensions.responsiveSp(12f),
             fontFamily = fuenteprincipal,
             textAlign = TextAlign.Center
         )

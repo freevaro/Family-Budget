@@ -21,7 +21,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.tfg.R
 
 @Composable
@@ -51,7 +50,7 @@ fun ShopScreen(
     )
 
     val negociosAlto = listOf(
-        Product("Negocio Premium", 1200, Icons.Default.Apartment),
+        Product("Negocio Plus", 1200, Icons.Default.Apartment),
         Product("Restaurante", 1300, Icons.Default.Restaurant),
         Product("Centro Comercial", 1500, Icons.Default.ShoppingCart)
     )
@@ -80,19 +79,21 @@ fun ShopScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(Dimensions.widthPercentage(4f)) // 4% del ancho
+                .padding(Dimensions.widthPercentage(4f))
                 .verticalScroll(rememberScrollState())
         ) {
             // Título
             Text(
                 text = "TIENDA",
                 color = Color.Black,
-                fontSize = Dimensions.responsiveSp(29f), // 5% del tamaño base
+                fontSize = Dimensions.responsiveSp(28f),
                 fontWeight = FontWeight.Bold,
                 fontFamily = fuenteprincipal,
                 modifier = Modifier
-                    .padding(top = Dimensions.heightPercentage(8f), // 8% del alto
-                        bottom = Dimensions.heightPercentage(3f))
+                    .padding(
+                        top = Dimensions.heightPercentage(7f),
+                        bottom = Dimensions.heightPercentage(3f)
+                    )
                     .align(Alignment.CenterHorizontally)
             )
 
@@ -164,7 +165,7 @@ fun ShopScreen(
             )
 
             // Espacio para la barra de navegación
-            Spacer(modifier = Modifier.height(80.dp))
+            Spacer(modifier = Modifier.height(Dimensions.heightPercentage(10f)))
         }
     }
 }
@@ -179,20 +180,23 @@ fun CategorySection(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = Dimensions.heightPercentage(1f)),
         colors = CardDefaults.cardColors(
             containerColor = darkGreen
         ),
-        shape = RoundedCornerShape(8.dp)
+        shape = RoundedCornerShape(Dimensions.widthPercentage(2f))
     ) {
         Text(
             text = title,
             color = Color.White,
-            fontSize = 18.sp,
+            fontSize = Dimensions.responsiveSp(18f),
             fontWeight = FontWeight.Bold,
             fontFamily = fuenteprincipal,
             modifier = Modifier
-                .padding(vertical = 8.dp, horizontal = 16.dp)
+                .padding(
+                    vertical = Dimensions.heightPercentage(1f),
+                    horizontal = Dimensions.widthPercentage(4f)
+                )
                 .fillMaxWidth()
         )
     }
@@ -209,17 +213,20 @@ fun SubcategorySection(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp)
+            .padding(vertical = Dimensions.heightPercentage(1f))
     ) {
         // Título de la subcategoría
         Text(
             text = title,
             color = Color.White,
-            fontSize = 16.sp,
+            fontSize = Dimensions.responsiveSp(16f),
             fontWeight = FontWeight.Bold,
             fontFamily = fuenteprincipal,
             modifier = Modifier
-                .padding(vertical = 4.dp, horizontal = 16.dp)
+                .padding(
+                    vertical = Dimensions.heightPercentage(0.5f),
+                    horizontal = Dimensions.widthPercentage(4f)
+                )
                 .fillMaxWidth()
         )
 
@@ -243,7 +250,7 @@ fun ProductRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = Dimensions.heightPercentage(0f), horizontal = Dimensions.widthPercentage(0.1f)),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         products.forEach { product ->
@@ -252,7 +259,7 @@ fun ProductRow(
                 fuenteprincipal = fuenteprincipal,
                 darkGreen = darkGreen,
                 lightGreen = lightGreen,
-                modifier = Modifier.width(Dimensions.widthPercentage(28f)) // 28% del ancho
+                modifier = Modifier.weight(1f)
             )
         }
     }
@@ -268,18 +275,18 @@ fun ProductCard(
 ) {
     Card(
         modifier = modifier
-            .padding(horizontal = 5.dp)
+            .padding(horizontal = Dimensions.widthPercentage(1.25f))
             .aspectRatio(0.55f),
         colors = CardDefaults.cardColors(
             containerColor = lightGreen.copy(alpha = 0.7f)
         ),
-        shape = RoundedCornerShape(16.dp)
+        shape = RoundedCornerShape(Dimensions.widthPercentage(4f))
     ) {
         // Usamos Box para posicionar el botón de forma fija en la parte inferior
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(4.dp)
+                .padding(Dimensions.widthPercentage(1f))
         ) {
             // Contenido superior (icono, nombre, precio)
             Column(
@@ -293,27 +300,31 @@ fun ProductCard(
                     contentDescription = product.name,
                     tint = darkGreen,
                     modifier = Modifier
-                        .padding(bottom = 8.dp, top = 25.dp)
+                        .padding(
+                            bottom = Dimensions.heightPercentage(1f),
+                            top = Dimensions.heightPercentage(3f)
+                        )
                         .size(Dimensions.widthPercentage(12f))
                 )
 
                 Text(
                     text = product.name,
                     fontFamily = fuenteprincipal,
-                    fontSize = Dimensions.responsiveSp(3.5f), // 3.5% del tamaño base                    color = Color.Black,
+                    fontSize = Dimensions.responsiveSp(14f),
+                    color = Color.Black,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    modifier = Modifier.padding(bottom = Dimensions.heightPercentage(0.5f))
                 )
 
                 Text(
                     text = "${'$'}${product.price}",
                     fontFamily = fuenteprincipal,
-                    fontSize = 16.sp,
+                    fontSize = Dimensions.responsiveSp(16f),
                     fontWeight = FontWeight.Bold,
                     color = darkGreen,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    modifier = Modifier.padding(bottom = Dimensions.heightPercentage(0.5f))
                 )
             }
 
@@ -321,16 +332,16 @@ fun ProductCard(
             Button(
                 onClick = { /* Lógica de compra */ },
                 colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
-                shape = RoundedCornerShape(8.dp),
+                shape = RoundedCornerShape(Dimensions.widthPercentage(2f)),
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(horizontal = 0.dp,vertical = 0.dp)
+                    .padding(horizontal = 0.dp, vertical = 0.dp)
             ) {
                 Text(
                     text = "COMPRAR",
                     fontFamily = fuenteprincipal,
-                    fontSize = 15.sp,
+                    fontSize = Dimensions.responsiveSp(15f),
                     modifier = Modifier.fillMaxWidth()
                 )
             }

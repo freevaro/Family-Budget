@@ -17,6 +17,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarToday
+
+import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
@@ -42,7 +44,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.example.tfg.R
@@ -63,7 +64,13 @@ fun GameHomeScreen(
     onNavigateToSettings: () -> Unit = {},
     navController: NavHostController,
     musicEnabled: Boolean,
-    onMusicToggle: (Boolean)-> Unit
+    onMusicToggle: (Boolean)-> Unit,
+    players: List<Player> = listOf(
+        Player("David", 600, 1),
+        Player("Ana", 550, 2),
+        Player("Carlos", 500, 3),
+        Player("Elena", 450, 4)
+    )
 ) {
     val showDialog = remember { mutableStateOf(false) }
     val primaryGreen = Color(0xFF9CCD5C)
@@ -85,134 +92,196 @@ fun GameHomeScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp),
+                .padding(Dimensions.widthPercentage(4f)),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row {
-                Text(
-                    text = "FAMILY BUDGET",
-                    color = Color.Black,
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = fuenteprincipal,
-                    modifier = Modifier.padding(top = 60.dp, bottom = 75.dp, start = 99.dp)
-                )
 
-                IconButton(
-                    onClick = { showDialog.value = true },
-                    modifier = Modifier.padding(top = 63.dp, bottom = 24.dp, start = 63.dp).size(27.dp)
-                ){
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = ""
-                )
-                }
+
             }
 
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 24.dp)
-                    .offset(y = 10.dp),
+                    .padding(bottom = Dimensions.heightPercentage(3f), top = Dimensions.heightPercentage(3f))
+                    .offset(y = Dimensions.heightPercentage(1f)),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Card(
-                    modifier = Modifier.weight(0.7f),
-                    colors = CardDefaults.cardColors(containerColor = lightGreen.copy(alpha = 0.7f)),
-                    shape = RoundedCornerShape(16.dp)
-                ) {
-                    Text(
-                        text = "Turno de "+playerName,
-                        fontSize = 24.sp,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        fontFamily = fuenteprincipal,
-                        modifier = Modifier
-                            .padding(vertical = 12.dp)
-                            .fillMaxWidth()
-                    )
-                }
-
-                Spacer(modifier = Modifier.width(12.dp))
 
                 Card(
                     modifier = Modifier.weight(0.3f),
                     colors = CardDefaults.cardColors(containerColor = darkGreen),
-                    shape = RoundedCornerShape(16.dp)
+                    shape = RoundedCornerShape(Dimensions.widthPercentage(4f))
                 ) {
                     Column(
-                        modifier = Modifier.padding(8.dp).fillMaxWidth(),
+                        modifier = Modifier
+                            .padding(Dimensions.widthPercentage(2f))
+                            .fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Icon(
                             imageVector = Icons.Default.CalendarToday,
                             contentDescription = "Calendar",
                             tint = Color.White,
-                            modifier = Modifier.size(24.dp)
+                            modifier = Modifier.size(Dimensions.widthPercentage(6f))
                         )
                         Text(
                             text = "Día $currentDay",
                             color = Color.White,
                             fontFamily = fuenteprincipal,
-                            fontSize = 14.sp
+                            fontSize = Dimensions.responsiveSp(14f)
                         )
-
                     }
                 }
+                Spacer(modifier = Modifier.width(Dimensions.widthPercentage(3f)))
+
+
+                Card(
+                    modifier = Modifier.weight(0.7f),
+                    colors = CardDefaults.cardColors(containerColor = lightGreen.copy(alpha = 0.7f)),
+                    shape = RoundedCornerShape(Dimensions.widthPercentage(4f))
+                ) {
+                    Text(
+                        text = "Turno de "+playerName,
+                        fontSize = Dimensions.responsiveSp(24f),
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        fontFamily = fuenteprincipal,
+                        modifier = Modifier
+                            .padding(vertical = Dimensions.heightPercentage(1.5f))
+                            .fillMaxWidth()
+                    )
+                }
+
+
+                Spacer(modifier = Modifier.width(Dimensions.widthPercentage(3f)))
+
+                IconButton(
+                    onClick = { showDialog.value = true },
+                    modifier = Modifier
+                        .padding(
+                            top = Dimensions.heightPercentage(3f),
+                            bottom = Dimensions.heightPercentage(3f),
+                            start = Dimensions.widthPercentage(2f),
+                            end = Dimensions.widthPercentage(3f)
+                        )
+                        .size(Dimensions.widthPercentage(7f))
+                ){
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = ""
+                    )
+                }
+
             }
 
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 32.dp)
-                    .offset(y = 10.dp),
+                    .padding(bottom = Dimensions.heightPercentage(4f))
+                    .offset(y = Dimensions.heightPercentage(1f)),
                 colors = CardDefaults.cardColors(containerColor = lightGreen.copy(alpha = 0.7f)),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(Dimensions.widthPercentage(4f))
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(Dimensions.widthPercentage(4f))) {
                     FinancialStatRow(Icons.Default.AttachMoney, "Dinero en efectivo", "$$cash")
-                    Divider(color = darkGreen.copy(alpha = 0.3f), modifier = Modifier.padding(vertical = 8.dp))
+                    Divider(
+                        color = darkGreen.copy(alpha = 0.3f),
+                        modifier = Modifier.padding(vertical = Dimensions.heightPercentage(1f))
+                    )
                     FinancialStatRow(Icons.Default.TrendingUp, "Ingresos pasivos", "$$passiveIncome")
-                    Divider(color = darkGreen.copy(alpha = 0.3f), modifier = Modifier.padding(vertical = 8.dp))
+                    Divider(
+                        color = darkGreen.copy(alpha = 0.3f),
+                        modifier = Modifier.padding(vertical = Dimensions.heightPercentage(1f))
+                    )
                     FinancialStatRow(Icons.Default.TrendingDown, "Gasto diario", "$$dailyExpenses")
                 }
             }
-
 
             Button(
                 onClick = onEndTurnClick,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(90.dp)
-                    .offset(y = 10.dp),
+                    .height(Dimensions.heightPercentage(9f))
+                    .offset(y = Dimensions.heightPercentage(1f)),
                 colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(Dimensions.widthPercentage(4f))
             ) {
-                Text("FINALIZAR TURNO", fontSize = 18.sp, fontWeight = FontWeight.Bold, fontFamily = fuenteprincipal)
+                Text(
+                    "FINALIZAR TURNO",
+                    fontSize = Dimensions.responsiveSp(18f),
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = fuenteprincipal
+                )
             }
 
-            Spacer(modifier = Modifier.height(24.dp))
-        }
+            Spacer(modifier = Modifier.height(Dimensions.heightPercentage(4.7f)))
 
+            // Sección de posiciones de jugadores
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = Dimensions.heightPercentage(2f)),
+                colors = CardDefaults.cardColors(containerColor = lightGreen.copy(alpha = 0.7f)),
+                shape = RoundedCornerShape(Dimensions.widthPercentage(4f))
+            ) {
+                Column(
+                    modifier = Modifier.padding(
+                        vertical = Dimensions.heightPercentage(1.5f),
+                        horizontal = Dimensions.widthPercentage(4f)
+                    )
+                ) {
+                    Text(
+                        text = "POSICIONES",
+                        fontSize = Dimensions.responsiveSp(16f),
+                        fontWeight = FontWeight.Bold,
+                        fontFamily = fuenteprincipal,
+                        color = darkGreen,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = Dimensions.heightPercentage(1f)),
+                        textAlign = TextAlign.Center
+                    )
+
+                    players.sortedByDescending { it.money }.forEachIndexed { index, player ->
+                        PlayerPositionRow(
+                            position = index + 1,
+                            player = player,
+                            isCurrentPlayer = player.name == playerName,
+                            fuenteprincipal = fuenteprincipal,
+                            darkGreen = darkGreen
+                        )
+
+                        if (index < players.size - 1) {
+                            Divider(
+                                color = darkGreen.copy(alpha = 0.2f),
+                                modifier = Modifier.padding(vertical = Dimensions.heightPercentage(0.5f))
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
+
     if (showDialog.value) {
         Dialog(onDismissRequest = { showDialog.value = false }) {
             Box(
                 modifier = Modifier
-                    .clip(RoundedCornerShape(20.dp))
+                    .clip(RoundedCornerShape(Dimensions.widthPercentage(5f)))
                     .background(Color(0xFF9CCD5C))
-                    .padding(24.dp)
+                    .padding(Dimensions.widthPercentage(6f))
             ) {
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         "Opciones",
-                        fontSize = 30.sp,
+                        fontSize = Dimensions.responsiveSp(30f),
                         fontFamily = fuenteprincipal,
                         color = Color.Black
                     )
-                    Spacer(modifier = Modifier.height(20.dp))
+                    Spacer(modifier = Modifier.height(Dimensions.heightPercentage(2.5f)))
 
                     // 🔊 Switch para el sonido
                     Row(
@@ -220,11 +289,11 @@ fun GameHomeScreen(
                     ) {
                         Text(
                             "🔊 Sonido:",
-                            fontSize = 20.sp,
+                            fontSize = Dimensions.responsiveSp(20f),
                             fontFamily = fuenteprincipal,
                             color = Color.Black
                         )
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Spacer(modifier = Modifier.width(Dimensions.widthPercentage(2.5f)))
                         androidx.compose.material3.Switch(
                             checked = musicEnabled,
                             onCheckedChange = { checked ->
@@ -233,28 +302,32 @@ fun GameHomeScreen(
                         )
                     }
 
-                    Spacer(modifier = Modifier.height(10.dp))
+                    Spacer(modifier = Modifier.height(Dimensions.heightPercentage(1.2f)))
 
-                    Text("🌐 Idioma: Español (Proximamente...)",
-                        fontSize = 20.sp,
+                    Text(
+                        "🌐 Idioma: Español (Proximamente...)",
+                        fontSize = Dimensions.responsiveSp(20f),
                         fontFamily = fuenteprincipal,
                         color = Color.Black
                     )
 
-                    Spacer(modifier = Modifier.height(30.dp))
+                    Spacer(modifier = Modifier.height(Dimensions.heightPercentage(3.7f)))
 
                     Box(
                         modifier = Modifier
-                            .clip(RoundedCornerShape(12.dp))
+                            .clip(RoundedCornerShape(Dimensions.widthPercentage(3f)))
                             .background(Color(0xFF759E73))
                             .clickable {
                                 showDialog.value = false
                             }
-                            .padding(horizontal = 20.dp, vertical = 10.dp)
+                            .padding(
+                                horizontal = Dimensions.widthPercentage(5f),
+                                vertical = Dimensions.heightPercentage(1.2f)
+                            )
                     ) {
                         Text(
                             "Cerrar",
-                            fontSize = 18.sp,
+                            fontSize = Dimensions.responsiveSp(18f),
                             fontFamily = fuenteprincipal,
                             color = Color.White
                         )
@@ -262,14 +335,11 @@ fun GameHomeScreen(
                 }
             }
         }
-
     }
 }
 
 @Composable
 fun PatternBackground() {
-
-
     Box(modifier = Modifier
         .fillMaxSize()
         // degradado de fondo
@@ -280,12 +350,6 @@ fun PatternBackground() {
         )
     )
 }
-
-
-
-
-
-
 
 @Composable
 fun FinancialStatRow(
@@ -299,21 +363,21 @@ fun FinancialStatRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = Dimensions.heightPercentage(0.5f)),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Icon(
             imageVector = icon,
             contentDescription = label,
             tint = Color(0xFF6B9A2F),
-            modifier = Modifier.size(24.dp)
+            modifier = Modifier.size(Dimensions.widthPercentage(6f))
         )
 
-        Spacer(modifier = Modifier.width(12.dp))
+        Spacer(modifier = Modifier.width(Dimensions.widthPercentage(3f)))
 
         Text(
             text = label,
-            fontSize = 16.sp,
+            fontSize = Dimensions.responsiveSp(16f),
             fontFamily = fuenteprincipal,
             color = Color(0xFF6B9A2F),
             modifier = Modifier.weight(1f)
@@ -321,10 +385,61 @@ fun FinancialStatRow(
 
         Text(
             text = value,
-            fontSize = 18.sp,
+            fontSize = Dimensions.responsiveSp(18f),
             fontWeight = FontWeight.Bold,
             fontFamily = fuenteprincipal,
             color = Color(0xFF6B9A2F)
+        )
+    }
+}
+
+data class Player(
+    val name: String,
+    val money: Int,
+    val position: Int
+)
+
+@Composable
+fun PlayerPositionRow(
+    position: Int,
+    player: Player,
+    isCurrentPlayer: Boolean,
+    fuenteprincipal: FontFamily,
+    darkGreen: Color
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = Dimensions.heightPercentage(0.5f)),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        // Posición
+        Text(
+            text = "$position.",
+            fontSize = Dimensions.responsiveSp(14f),
+            fontWeight = FontWeight.Bold,
+            fontFamily = fuenteprincipal,
+            color = if (isCurrentPlayer) darkGreen else darkGreen.copy(alpha = 0.7f),
+            modifier = Modifier.width(Dimensions.widthPercentage(6f))
+        )
+
+        // Nombre del jugador
+        Text(
+            text = player.name,
+            fontSize = Dimensions.responsiveSp(14f),
+            fontWeight = if (isCurrentPlayer) FontWeight.Bold else FontWeight.Normal,
+            fontFamily = fuenteprincipal,
+            color = if (isCurrentPlayer) darkGreen else darkGreen.copy(alpha = 0.7f),
+            modifier = Modifier.weight(1f)
+        )
+
+        // Dinero del jugador
+        Text(
+            text = "$${player.money}",
+            fontSize = Dimensions.responsiveSp(14f),
+            fontWeight = FontWeight.Bold,
+            fontFamily = fuenteprincipal,
+            color = if (isCurrentPlayer) darkGreen else darkGreen.copy(alpha = 0.7f)
         )
     }
 }

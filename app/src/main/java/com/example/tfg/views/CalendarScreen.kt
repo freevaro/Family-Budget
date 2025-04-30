@@ -29,7 +29,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.tfg.R
 
 
@@ -64,17 +63,20 @@ fun CalendarScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(Dimensions.widthPercentage(4f))
         ) {
             // Título
             Text(
                 text = "CALENDARIO",
                 color = Color.Black,
-                fontSize = Dimensions.responsiveSp(29f),
+                fontSize = Dimensions.responsiveSp(28f),
                 fontWeight = FontWeight.Bold,
                 fontFamily = fuenteprincipal,
                 modifier = Modifier
-                    .padding(top = 60.dp, bottom = 24.dp)
+                    .padding(
+                        top = Dimensions.heightPercentage(7f),
+                        bottom = Dimensions.heightPercentage(3f)
+                    )
                     .align(Alignment.CenterHorizontally)
             )
 
@@ -82,7 +84,7 @@ fun CalendarScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp),
+                    .padding(bottom = Dimensions.heightPercentage(2f)),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -90,14 +92,15 @@ fun CalendarScreen(
                     Icon(
                         imageVector = Icons.Default.ChevronLeft,
                         contentDescription = "Mes anterior",
-                        tint = Color.White
+                        tint = Color.White,
+                        modifier = Modifier.size(Dimensions.widthPercentage(6f))
                     )
                 }
 
                 Text(
                     text = "MES 1",
                     color = Color.White,
-                    fontSize = 20.sp,
+                    fontSize = Dimensions.responsiveSp(20f),
                     fontWeight = FontWeight.Bold,
                     fontFamily = fuenteprincipal
                 )
@@ -106,7 +109,8 @@ fun CalendarScreen(
                     Icon(
                         imageVector = Icons.Default.ChevronRight,
                         contentDescription = "Mes siguiente",
-                        tint = Color.White
+                        tint = Color.White,
+                        modifier = Modifier.size(Dimensions.widthPercentage(6f))
                     )
                 }
             }
@@ -115,17 +119,17 @@ fun CalendarScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 8.dp),
+                    .padding(bottom = Dimensions.heightPercentage(1f)),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 listOf("L", "M", "X", "J", "V", "S", "D").forEach { day ->
                     Text(
                         text = day,
                         color = Color.White,
-                        fontSize = 16.sp,
+                        fontSize = Dimensions.responsiveSp(16f),
                         fontWeight = FontWeight.Bold,
                         fontFamily = fuenteprincipal,
-                        modifier = Modifier.width(32.dp),
+                        modifier = Modifier.width(Dimensions.widthPercentage(8f)),
                         textAlign = TextAlign.Center
                     )
                 }
@@ -137,11 +141,11 @@ fun CalendarScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .weight(1f)
-                    .padding(bottom = 8.dp)
+                    .padding(bottom = Dimensions.heightPercentage(1f))
             ) {
                 // Espacios vacíos para alinear el primer día
                 items(2) {
-                    Box(modifier = Modifier.size(48.dp))
+                    Box(modifier = Modifier.size(Dimensions.widthPercentage(12f)))
                 }
 
                 // Días del mes
@@ -159,30 +163,31 @@ fun CalendarScreen(
             // Información del día actual
             Card(
                 modifier = Modifier
-                    .fillMaxWidth().padding(bottom = 38.dp),
+                    .fillMaxWidth()
+                    .padding(bottom = Dimensions.heightPercentage(4.7f)),
                 colors = CardDefaults.cardColors(
                     containerColor = lightGreen.copy(alpha = 0.7f)
                 ),
-                shape = RoundedCornerShape(16.dp)
+                shape = RoundedCornerShape(Dimensions.widthPercentage(4f))
             ) {
                 Column(
-                    modifier = Modifier.padding(16.dp)
+                    modifier = Modifier.padding(Dimensions.widthPercentage(4f))
                 ) {
                     Text(
                         text = "Día $currentDay - Turno X",
                         fontFamily = fuenteprincipal,
-                        fontSize = 20.sp,
+                        fontSize = Dimensions.responsiveSp(20f),
                         fontWeight = FontWeight.Bold,
                         color = darkGreen,
-                        modifier = Modifier.padding(bottom = 16.dp)
+                        modifier = Modifier.padding(bottom = Dimensions.heightPercentage(2f))
                     )
 
                     Text(
                         text = "Resumen Actual:",
                         fontFamily = fuenteprincipal,
-                        fontSize = 18.sp,
+                        fontSize = Dimensions.responsiveSp(18f),
                         color = darkGreen,
-                        modifier = Modifier.padding(bottom = 8.dp)
+                        modifier = Modifier.padding(bottom = Dimensions.heightPercentage(1f))
                     )
 
                     Row(
@@ -193,12 +198,12 @@ fun CalendarScreen(
                             imageVector = Icons.Default.Business,
                             contentDescription = "Negocios",
                             tint = darkGreen,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(Dimensions.widthPercentage(5f))
                         )
                         Text(
                             text = " Negocios: 3",
                             fontFamily = fuenteprincipal,
-                            fontSize = 16.sp,
+                            fontSize = Dimensions.responsiveSp(16f),
                             color = Color.Black
                         )
                     }
@@ -211,12 +216,12 @@ fun CalendarScreen(
                             imageVector = Icons.Default.TrendingUp,
                             contentDescription = "Ingresos",
                             tint = darkGreen,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(Dimensions.widthPercentage(5f))
                         )
                         Text(
                             text = " Ingresos totales: $250/día",
                             fontFamily = fuenteprincipal,
-                            fontSize = 16.sp,
+                            fontSize = Dimensions.responsiveSp(16f),
                             color = Color.Black
                         )
                     }
@@ -229,12 +234,12 @@ fun CalendarScreen(
                             imageVector = Icons.Default.TrendingDown,
                             contentDescription = "Gastos diarios",
                             tint = darkGreen,
-                            modifier = Modifier.size(20.dp)
+                            modifier = Modifier.size(Dimensions.widthPercentage(5f))
                         )
                         Text(
                             text = " Gastos diarios: $80/día",
                             fontFamily = fuenteprincipal,
-                            fontSize = 16.sp,
+                            fontSize = Dimensions.responsiveSp(16f),
                             color = Color.Black
                         )
                     }
@@ -255,8 +260,8 @@ fun CalendarDay(
     Box(
         contentAlignment = Alignment.Center,
         modifier = Modifier
-            .padding(4.dp)
-            .size(40.dp)
+            .padding(Dimensions.widthPercentage(1f))
+            .size(Dimensions.widthPercentage(10f))
             .clip(CircleShape)
             .background(
                 if (isCurrentDay) darkGreen else Color.Transparent
@@ -270,7 +275,7 @@ fun CalendarDay(
         Text(
             text = day.toString(),
             color = if (isCurrentDay) Color.White else Color.White.copy(alpha = 0.8f),
-            fontSize = 16.sp,
+            fontSize = Dimensions.responsiveSp(16f),
             fontFamily = fuenteprincipal,
             textAlign = TextAlign.Center
         )

@@ -24,8 +24,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.example.tfg.R
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -76,24 +74,27 @@ fun BusinessScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(Dimensions.widthPercentage(4f))
         ) {
             // Título
             Text(
                 text = "NEGOCIOS",
                 color = Color.Black,
-                fontSize = Dimensions.responsiveSp(29f), // 5% del tamaño base
+                fontSize = Dimensions.responsiveSp(28f),
                 fontWeight = FontWeight.Bold,
                 fontFamily = fuenteprincipal,
                 modifier = Modifier
-                    .padding(top = 60.dp, bottom = 75.dp)
+                    .padding(
+                        top = Dimensions.heightPercentage(7f),
+                        bottom = Dimensions.heightPercentage(9f)
+                    )
                     .align(Alignment.CenterHorizontally)
             )
 
             // Negocios
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
-                contentPadding = PaddingValues(bottom = 80.dp),
+                contentPadding = PaddingValues(bottom = Dimensions.heightPercentage(10f)),
                 modifier = Modifier.weight(1f)
             ) {
                 items(businesses) { business ->
@@ -106,8 +107,6 @@ fun BusinessScreen(
                 }
             }
         }
-
-        // Barra de navegación inferior
     }
 }
 
@@ -121,14 +120,14 @@ fun BusinessCard(
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .padding(8.dp)
+            .padding(Dimensions.widthPercentage(2f))
             .fillMaxWidth()
     ) {
         // Icono circular del negocio
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier
-                .size(80.dp)
+                .size(Dimensions.widthPercentage(20f))
                 .clip(CircleShape)
                 .background(lightGreen.copy(alpha = 0.7f))
                 .clickable { /* Lógica para ver detalles */ }
@@ -137,7 +136,7 @@ fun BusinessCard(
                 imageVector = business.icon,
                 contentDescription = business.name,
                 tint = darkGreen,
-                modifier = Modifier.size(40.dp)
+                modifier = Modifier.size(Dimensions.widthPercentage(10f))
             )
         }
 
@@ -145,19 +144,19 @@ fun BusinessCard(
         Text(
             text = business.name,
             fontFamily = fuenteprincipal,
-            fontSize = 14.sp,
+            fontSize = Dimensions.responsiveSp(14f),
             color = Color.White,
             textAlign = TextAlign.Center,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(top = 8.dp)
+            modifier = Modifier.padding(top = Dimensions.heightPercentage(1f))
         )
 
         // Ingresos diarios
         Text(
             text = "$${business.dailyIncome}/día",
             fontFamily = fuenteprincipal,
-            fontSize = 12.sp,
+            fontSize = Dimensions.responsiveSp(12f),
             color = Color.White.copy(alpha = 0.8f),
             textAlign = TextAlign.Center
         )
