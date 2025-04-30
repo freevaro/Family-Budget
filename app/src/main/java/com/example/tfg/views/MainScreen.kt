@@ -95,9 +95,9 @@ fun MainScreen(
     }
     val showDialog = remember { mutableStateOf(false) }
     val botonModifier = Modifier
-        .padding(horizontal = (totalWidth * 0.15f).dp, vertical = 10.dp)
+        .padding(horizontal = (totalWidth * 0.15f).dp, vertical = Dimensions.heightPercentage(2f))
         .fillMaxWidth()
-        .height(50.dp)
+        .height(Dimensions.heightPercentage(6f))
         .border(width = 2.dp, color = Color(0x00727272), shape = MaterialTheme.shapes.medium)
         .clip(RoundedCornerShape(12.dp))
         .background(Color(0xFF9CCD5C))
@@ -143,7 +143,7 @@ fun MainScreen(
         }
 
         Column (modifier = Modifier.fillMaxSize()){
-            Box(modifier = Modifier.fillMaxWidth().offset(y = (totalHeight*0.04f).dp).padding(horizontal = 30.dp, vertical = 45.dp)){
+            Box(modifier = Modifier.fillMaxWidth().padding(top = Dimensions.heightPercentage(12f), start = Dimensions.widthPercentage(6f), end = Dimensions.widthPercentage(6f))){
                 Row(modifier = Modifier.fillMaxWidth()
                         .padding(2.dp)
                         .border(width = 2.dp, color = Color(0x00727272), shape = MaterialTheme.shapes.medium)
