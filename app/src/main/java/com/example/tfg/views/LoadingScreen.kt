@@ -57,7 +57,7 @@ fun LoadingScreen(modifier: Modifier = Modifier, navController: NavController){
         Column (modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center){
-            Box(modifier = Modifier.offset(x = (totalWidth * 0f).dp, y = (totalHeight*-0.07f).dp).padding(horizontal = 50.dp)){
+            Box(modifier = Modifier.offset(x = (totalWidth * 0f).dp, y = (totalHeight*-0.07f).dp).padding(Dimensions.widthPercentage(12.8f))){
                 Column (horizontalAlignment = Alignment.CenterHorizontally){
                     Text(
                         text = "Family Budget",
@@ -76,7 +76,7 @@ fun LoadingScreen(modifier: Modifier = Modifier, navController: NavController){
                             loadProgress { progress ->
                                 currentProgress = progress
                             }
-                            navController.navigate("pantalla_principal")
+//                            navController.navigate("pantalla_principal")
                         }
                     }
                     if (loading) {
