@@ -82,19 +82,32 @@ fun ShopScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             // Título
-            Text(
-                text = "TIENDA",
-                color = Color.Black,
-                fontSize = Dimensions.responsiveSp(28f),
-                fontWeight = FontWeight.Bold,
-                fontFamily = fuenteprincipal,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
                 modifier = Modifier
+                    .fillMaxWidth()
                     .padding(
-                        top = Dimensions.heightPercentage(7f),
+                        top = Dimensions.heightPercentage(6f),
                         bottom = Dimensions.heightPercentage(3f)
                     )
-                    .align(Alignment.CenterHorizontally)
-            )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ShoppingCart,
+                    contentDescription = "Shop",
+                    tint = Color.Black,
+                    modifier = Modifier
+                        .size(Dimensions.widthPercentage(10f))
+                        .padding(end = Dimensions.widthPercentage(2f))
+                )
+                Text(
+                    text = "TIENDA",
+                    color = Color.Black,
+                    fontSize = Dimensions.responsiveSp(28f),
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = fuenteprincipal
+                )
+            }
 
             // Sección Negocios
             CategorySection(

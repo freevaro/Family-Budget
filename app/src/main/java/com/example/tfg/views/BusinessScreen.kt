@@ -77,19 +77,32 @@ fun BusinessScreen(
                 .padding(Dimensions.widthPercentage(4f))
         ) {
             // Título
-            Text(
-                text = "NEGOCIOS",
-                color = Color.Black,
-                fontSize = Dimensions.responsiveSp(28f),
-                fontWeight = FontWeight.Bold,
-                fontFamily = fuenteprincipal,
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center,
                 modifier = Modifier
+                    .fillMaxWidth()
                     .padding(
-                        top = Dimensions.heightPercentage(7f),
-                        bottom = Dimensions.heightPercentage(9f)
+                        top = Dimensions.heightPercentage(6f),
+                        bottom = Dimensions.heightPercentage(3f)
                     )
-                    .align(Alignment.CenterHorizontally)
-            )
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Business,
+                    contentDescription = "Business",
+                    tint = Color.Black,
+                    modifier = Modifier
+                        .size(Dimensions.widthPercentage(10f))
+                        .padding(end = Dimensions.widthPercentage(2f))
+                )
+                Text(
+                    text = "NEGOCIOS",
+                    color = Color.Black,
+                    fontSize = Dimensions.responsiveSp(28f),
+                    fontWeight = FontWeight.Bold,
+                    fontFamily = fuenteprincipal
+                )
+            }
 
             // Negocios
             LazyVerticalGrid(
