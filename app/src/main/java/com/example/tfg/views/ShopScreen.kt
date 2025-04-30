@@ -49,7 +49,7 @@ fun ShopScreen(
     )
 
     val negociosAlto = listOf(
-        Product("Negocio Plus", 1200, Icons.Default.Apartment),
+        Product("Negocio Premium", 1200, Icons.Default.Apartment),
         Product("Restaurante", 1300, Icons.Default.Restaurant),
         Product("Centro Comercial", 1500, Icons.Default.ShoppingCart)
     )
@@ -249,7 +249,7 @@ fun ProductRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = Dimensions.heightPercentage(1f)),
+            .padding(vertical = Dimensions.heightPercentage(0.5f)),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         products.forEach { product ->
@@ -300,21 +300,27 @@ fun ProductCard(
                     tint = darkGreen,
                     modifier = Modifier
                         .padding(
-                            bottom = Dimensions.heightPercentage(1f),
-                            top = Dimensions.heightPercentage(3f)
+                            bottom = Dimensions.heightPercentage(0.5f),
+                            top = Dimensions.heightPercentage(2f)
                         )
-                        .size(Dimensions.widthPercentage(12f))
+                        .size(Dimensions.widthPercentage(10f))
                 )
 
                 Text(
                     text = product.name,
                     fontFamily = fuenteprincipal,
-                    fontSize = Dimensions.responsiveSp(14f),
+                    fontSize = Dimensions.responsiveSp(12f),
                     color = Color.Black,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(bottom = Dimensions.heightPercentage(0.5f))
+                    lineHeight = Dimensions.responsiveSp(14f),
+                    modifier = Modifier
+                        .padding(
+                            vertical = Dimensions.heightPercentage(0.5f),
+                            horizontal = Dimensions.widthPercentage(1f)
+                        )
+                        .fillMaxWidth()
                 )
 
                 Text(
