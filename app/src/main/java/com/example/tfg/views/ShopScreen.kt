@@ -20,7 +20,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.dp
 import com.example.tfg.R
 
 @Composable
@@ -250,7 +249,7 @@ fun ProductRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = Dimensions.heightPercentage(0f), horizontal = Dimensions.widthPercentage(0.1f)),
+            .padding(vertical = Dimensions.heightPercentage(1f)),
         horizontalArrangement = Arrangement.SpaceEvenly
     ) {
         products.forEach { product ->
@@ -333,15 +332,18 @@ fun ProductCard(
                 onClick = { /* Lógica de compra */ },
                 colors = ButtonDefaults.buttonColors(containerColor = darkGreen),
                 shape = RoundedCornerShape(Dimensions.widthPercentage(2f)),
+                contentPadding = PaddingValues(horizontal = Dimensions.widthPercentage(1f), vertical = Dimensions.heightPercentage(0.5f)),
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .fillMaxWidth()
-                    .padding(horizontal = 0.dp, vertical = 0.dp)
             ) {
                 Text(
                     text = "COMPRAR",
                     fontFamily = fuenteprincipal,
-                    fontSize = Dimensions.responsiveSp(15f),
+                    fontSize = Dimensions.responsiveSp(13f),
+                    maxLines = 1,
+                    overflow = TextOverflow.Visible,
+                    textAlign = TextAlign.Center,
                     modifier = Modifier.fillMaxWidth()
                 )
             }
