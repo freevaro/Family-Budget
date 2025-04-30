@@ -62,8 +62,8 @@ fun LoadingScreen(modifier: Modifier = Modifier, navController: NavController){
                     Text(
                         text = "Family Budget",
                         fontFamily = fuenteprincipal,
-                        fontSize = 30.sp,
-                        modifier = Modifier.fillMaxWidth().padding(60.dp).align(Alignment.CenterHorizontally)
+                        fontSize = Dimensions.responsiveSp(30f), // 5% del tamaño base,
+                        modifier = Modifier.fillMaxWidth().padding(Dimensions.widthPercentage(15f)).align(Alignment.CenterHorizontally)
                     )
                     Image(
                         painter = painterResource(id = R.drawable.dollar),

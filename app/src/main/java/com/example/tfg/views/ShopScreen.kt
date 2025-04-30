@@ -80,18 +80,19 @@ fun ShopScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(16.dp)
+                .padding(Dimensions.widthPercentage(4f)) // 4% del ancho
                 .verticalScroll(rememberScrollState())
         ) {
             // Título
             Text(
                 text = "TIENDA",
                 color = Color.Black,
-                fontSize = 28.sp,
+                fontSize = Dimensions.responsiveSp(29f), // 5% del tamaño base
                 fontWeight = FontWeight.Bold,
                 fontFamily = fuenteprincipal,
                 modifier = Modifier
-                    .padding(top = 60.dp, bottom = 24.dp)
+                    .padding(top = Dimensions.heightPercentage(8f), // 8% del alto
+                        bottom = Dimensions.heightPercentage(3f))
                     .align(Alignment.CenterHorizontally)
             )
 
@@ -251,7 +252,7 @@ fun ProductRow(
                 fuenteprincipal = fuenteprincipal,
                 darkGreen = darkGreen,
                 lightGreen = lightGreen,
-                modifier = Modifier.weight(1f)
+                modifier = Modifier.width(Dimensions.widthPercentage(28f)) // 28% del ancho
             )
         }
     }
@@ -293,14 +294,13 @@ fun ProductCard(
                     tint = darkGreen,
                     modifier = Modifier
                         .padding(bottom = 8.dp, top = 25.dp)
-                        .size(48.dp)
+                        .size(Dimensions.widthPercentage(12f))
                 )
 
                 Text(
                     text = product.name,
                     fontFamily = fuenteprincipal,
-                    fontSize = 14.sp,
-                    color = Color.Black,
+                    fontSize = Dimensions.responsiveSp(3.5f), // 3.5% del tamaño base                    color = Color.Black,
                     textAlign = TextAlign.Center,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis,

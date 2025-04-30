@@ -82,7 +82,7 @@ fun BusinessScreen(
             Text(
                 text = "NEGOCIOS",
                 color = Color.Black,
-                fontSize = 28.sp,
+                fontSize = Dimensions.responsiveSp(29f), // 5% del tamaño base
                 fontWeight = FontWeight.Bold,
                 fontFamily = fuenteprincipal,
                 modifier = Modifier

@@ -157,7 +157,8 @@ fun MainScreen(
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
                             fontFamily = fuenteprincipal,
-                            fontSize = 45.sp)
+                            fontSize = Dimensions.responsiveSp(50f)
+                        )
 
                     }
 

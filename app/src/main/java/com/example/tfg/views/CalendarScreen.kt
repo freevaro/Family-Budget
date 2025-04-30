@@ -70,7 +70,7 @@ fun CalendarScreen(
             Text(
                 text = "CALENDARIO",
                 color = Color.Black,
-                fontSize = 28.sp,
+                fontSize = Dimensions.responsiveSp(29f),
                 fontWeight = FontWeight.Bold,
                 fontFamily = fuenteprincipal,
                 modifier = Modifier
