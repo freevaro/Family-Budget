@@ -1,72 +1,42 @@
 package com.example.tfg.views
 
 import android.annotation.SuppressLint
-import android.media.MediaPlayer
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Home
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedIconButton
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.example.tfg.R
-import java.time.format.TextStyle
 import kotlin.random.Random
 
-
-data class FallingIcon(var x: Float, val speed: Float, var y: Float)
-
-
+data class FallingIcon(var x: Float, val speed: Float, var y: Float, val rotation: Float, val scale: Float)
 
 @SuppressLint("RememberReturnType")
 @Composable
-
 fun MainScreen(
     modifier: Modifier = Modifier,
     navController: NavController,
@@ -79,217 +49,358 @@ fun MainScreen(
     val density = LocalDensity.current
     val widthPx = with(density) { totalWidth.dp.toPx() }
     val heightPx = with(density) { totalHeight.dp.toPx() }
-    val fuenteprincipal = FontFamily(
+
+    val fuentePrincipal = FontFamily(
         Font(R.font.barriecito_regular)
     )
+
+    // Colores del juego
+    val backgroundGreen = Color(0xFFc1ff72)
+    val buttonGreen = Color(0xFF9CCD5C)
+    val darkGreen = Color(0xFF759E73)
+
+    // Animación para el título
+    val titleScale = remember { Animatable(0.9f) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            titleScale.animateTo(
+                targetValue = 1.01f,
+                animationSpec = tween(700, easing = FastOutSlowInEasing)
+            )
+            titleScale.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(700, easing = FastOutSlowInEasing)
+            )
+        }
+    }
+
+    // Iconos cayendo (símbolos de dólar)
     val icons = remember {
         mutableStateOf(
-            List(100) {
+            List(80) {
                 FallingIcon(
                     x = Random.nextFloat() * widthPx,
                     speed = Random.nextFloat() * 3f + 1f,
-                    y = Random.nextFloat() * -heightPx
+                    y = Random.nextFloat() * -heightPx,
+                    rotation = Random.nextFloat() * 360f,
+                    scale = Random.nextFloat() * 0.5f + 0.5f
                 )
             }
         )
     }
-    val showDialog = remember { mutableStateOf(false) }
-    val botonModifier = Modifier
-        .padding(horizontal = (totalWidth * 0.15f).dp, vertical = Dimensions.heightPercentage(2f))
-        .fillMaxWidth()
-        .height(Dimensions.heightPercentage(6f))
-        .border(width = 2.dp, color = Color(0x00727272), shape = MaterialTheme.shapes.medium)
-        .clip(RoundedCornerShape(12.dp))
-        .background(Color(0xFF9CCD5C))
 
+    // Actualizar posición de los iconos
     LaunchedEffect(Unit) {
         while (true) {
             icons.value = icons.value.map { icon ->
                 val newY = icon.y + icon.speed
-                if (newY > totalHeight * 2) {
+                if (newY > heightPx * 1.2f) {
                     icon.copy(
                         y = Random.nextFloat() * -heightPx,
-                        x = Random.nextFloat() * widthPx
+                        x = Random.nextFloat() * widthPx,
+                        rotation = Random.nextFloat() * 360f
                     )
                 } else {
                     icon.copy(y = newY)
                 }
             }
-            kotlinx.coroutines.delay(15L)
+            kotlinx.coroutines.delay(16L)
         }
     }
 
+    val showDialog = remember { mutableStateOf(false) }
 
-    Box(modifier = modifier.fillMaxSize().background(Color(0xFFc1ff72))){
-            Image(
-                painter = painterResource(id = R.drawable.fondo),
-                contentDescription = null,
-                modifier = Modifier.fillMaxSize(),
-                contentScale = ContentScale.Crop
+    // Animación para botones
+    val buttonScale = remember { Animatable(1f) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            buttonScale.animateTo(
+                targetValue = 1.05f,
+                animationSpec = tween(800, easing = FastOutSlowInEasing)
             )
+            buttonScale.animateTo(
+                targetValue = 1f,
+                animationSpec = tween(800, easing = FastOutSlowInEasing)
+            )
+        }
+    }
+
+    Box(modifier = modifier.fillMaxSize().background(backgroundGreen)) {
+        // Fondo con símbolos de dólar animados
         Canvas(modifier = Modifier.fillMaxSize()) {
             icons.value.forEach { icon ->
-                drawContext.canvas.nativeCanvas.drawText(
-                    "$",
-                    icon.x,
-                    icon.y,
-                    android.graphics.Paint().apply {
-                        textSize = 100f
-                        color = android.graphics.Color.argb(100, 0, 100, 0)
-                        isFakeBoldText = true
-                    }
-                )
+                drawContext.canvas.nativeCanvas.apply {
+                    save()
+                    translate(icon.x, icon.y)
+                    rotate(icon.rotation)
+                    scale(icon.scale, icon.scale)
+                    drawText(
+                        "$",
+                        0f,
+                        0f,
+                        android.graphics.Paint().apply {
+                            textSize = 80f
+                            color = android.graphics.Color.argb(100, 0, 100, 0)
+                            isFakeBoldText = true
+                        }
+                    )
+                    restore()
+                }
             }
         }
 
-        Column (modifier = Modifier.fillMaxSize()){
-            Box(modifier = Modifier.fillMaxWidth().padding(top = Dimensions.heightPercentage(12f), start = Dimensions.widthPercentage(6f), end = Dimensions.widthPercentage(6f))){
-                Row(modifier = Modifier.fillMaxWidth()
-                        .border(width = 2.dp, color = Color(0x00727272), shape = MaterialTheme.shapes.medium)
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFF9CCD5C)),
-                    horizontalArrangement = Arrangement.Center){
-                    Box(modifier = Modifier
-                        .padding(vertical = Dimensions.heightPercentage(4f), horizontal = Dimensions.widthPercentage(2f)).fillMaxWidth()){
-                        Text("FAMILY BUDGET",
-                            color = Color(0xFF000000),
-                            modifier = Modifier.fillMaxWidth(),
-                            textAlign = TextAlign.Center,
-                            fontFamily = fuenteprincipal,
-                            fontSize = 50.sp
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Título con animación
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(
+                        top = Dimensions.heightPercentage(10f),
+                        start = Dimensions.widthPercentage(6f),
+                        end = Dimensions.widthPercentage(6f)
+                    )
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .scale(titleScale.value)
+                        .border(
+                            width = 1.dp,
+                            color = Color.Black,
+                            shape = RoundedCornerShape(16.dp)
                         )
-
-                    }
-
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(buttonGreen)
+                ) {
+                    Text(
+                        "FAMILY BUDGET",
+                        color = Color.Black,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = Dimensions.heightPercentage(4f)),
+                        textAlign = TextAlign.Center,
+                        fontFamily = fuentePrincipal,
+                        fontSize = 50.sp
+                    )
                 }
-
             }
 
+            // Botones de juego
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(top = (totalHeight * 0.13f).dp),
+                    .padding(top = Dimensions.heightPercentage(10f)),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
+                // Botón Jugar con animación
                 Box(
-                    modifier = botonModifier
-                        .clickable {navController.navigate("pantalla_juego")
-                        },
+                    modifier = Modifier
+                        .padding(
+                            horizontal = Dimensions.widthPercentage(15f),
+                            vertical = Dimensions.heightPercentage(2f)
+                        )
+                        .fillMaxWidth()
+                        .height(Dimensions.heightPercentage(8f))
+                        .scale(buttonScale.value)
+                        .border(
+                            width = 1.dp,
+                            color = Color.Black,
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(buttonGreen)
+                        .clickable { navController.navigate("pantalla_juego") },
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "Jugar",
-                        color = Color(0xFF000000),
-                        fontFamily = fuenteprincipal,
-                        fontSize = 30.sp
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            Icons.Default.PlayArrow,
+                            contentDescription = null,
+                            modifier = Modifier.size(40.dp),
+                            tint = Color.Black
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "JUGAR",
+                            color = Color.Black,
+                            fontFamily = fuentePrincipal,
+                            fontSize = 36.sp
+                        )
+                    }
                 }
 
+                Spacer(modifier = Modifier.height(Dimensions.heightPercentage(4f)))
 
+                // Botón Opciones
+                Box(
+                    modifier = Modifier
+                        .padding(
+                            horizontal = Dimensions.widthPercentage(15f),
+                            vertical = Dimensions.heightPercentage(2f)
+                        )
+                        .fillMaxWidth()
+                        .height(Dimensions.heightPercentage(8f))
+                        .border(
+                            width = 1.dp,
+                            color = Color.Black,
+                            shape = RoundedCornerShape(16.dp)
+                        )
+                        .clip(RoundedCornerShape(16.dp))
+                        .background(buttonGreen)
+                        .clickable { showDialog.value = true },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = null,
+                            modifier = Modifier.size(36.dp),
+                            tint = Color.Black
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "OPCIONES",
+                            color = Color.Black,
+                            fontFamily = fuentePrincipal,
+                            fontSize = 36.sp
+                        )
+                    }
+                }
 
-                if (showDialog.value) {
-                    Dialog(onDismissRequest = { showDialog.value = false }) {
-                        Box(
-                            modifier = Modifier
-                                .clip(RoundedCornerShape(20.dp))
-                                .background(Color(0xFF9CCD5C))
-                                .padding(Dimensions.heightPercentage(3f))
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
-                            ) {
-                                Text(
-                                    "Opciones",
-                                    fontSize = 30.sp,
-                                    fontFamily = fuenteprincipal,
-                                    color = Color.Black
+                // Monedas decorativas
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = Dimensions.heightPercentage(6f)),
+                    horizontalArrangement = Arrangement.SpaceEvenly
+                ) {
+                    for (i in 1..3) {
+                        val rotation = remember { Animatable(0f) }
+                        LaunchedEffect(Unit) {
+                            while (true) {
+                                rotation.animateTo(
+                                    targetValue = 360f,
+                                    animationSpec = tween(2000, easing = LinearEasing)
                                 )
-                                Spacer(modifier = Modifier.height(20.dp))
-
-                                // 🔊 Switch para el sonido
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        "🔊 Sonido:",
-                                        fontSize = 20.sp,
-                                        fontFamily = fuenteprincipal,
-                                        color = Color.Black
-                                    )
-                                    Spacer(modifier = Modifier.width(10.dp))
-                                    androidx.compose.material3.Switch(
-                                        checked = musicEnabled,
-                                        onCheckedChange = { checked ->
-                                            onMusicToggle(!musicEnabled)
-                                        }
-                                    )
-                                }
-
-                                Spacer(modifier = Modifier.height(10.dp))
-
-                                Text("🌐 Idioma: Español (Proximamente...)",
-                                    fontSize = 20.sp,
-                                    textAlign = TextAlign.Center,
-                                    fontFamily = fuenteprincipal,
-                                    color = Color.Black
-                                )
-
-                                Spacer(modifier = Modifier.height(30.dp))
-
-                                Box(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(12.dp))
-                                        .background(Color(0xFF759E73))
-                                        .clickable {
-                                            showDialog.value = false
-                                        }
-                                        .padding(horizontal = 20.dp, vertical = 10.dp)
-                                ) {
-                                    Text(
-                                        "Cerrar",
-                                        fontSize = 18.sp,
-                                        fontFamily = fuenteprincipal,
-                                        color = Color.White
-                                    )
-                                }
+                                rotation.snapTo(0f)
                             }
                         }
+
+                        Box(
+                            modifier = Modifier
+                                .size(60.dp)
+                                .rotate(rotation.value)
+                                .background(darkGreen, CircleShape)
+                                .border(2.dp, Color.Black.copy(alpha = 0.5f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "$",
+                                color = Color.White,
+                                fontSize = 36.sp,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold
+                            )
+                        }
                     }
-
-                }
-
-
-
-                Box(
-                    modifier = botonModifier
-                        .clickable {
-                            showDialog.value = true
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "Opciones",
-                        color = Color(0xFF000000),
-                        fontFamily = fuenteprincipal,
-                        fontSize = 30.sp
-                    )
                 }
             }
+        }
 
-//            Box(modifier = Modifier.fillMaxWidth().offset(y = (totalHeight*0.38f).dp).padding(vertical = 10.dp)){
-//                Row(modifier = Modifier.fillMaxWidth().background(Color(0xFF759E73)).padding(vertical = 4.dp), horizontalArrangement = Arrangement.Center){
-//                    Box(modifier = Modifier
-//                        .size(60.dp)
-//    //                    .border(width = 2.dp, color = Color(0xFF000000), shape = MaterialTheme.shapes.medium)
-//                        .padding(6.dp)){
-//                        OutlinedIconButton(onClick = {},
-//                            ) {
-//                            Icon(Icons.Default.Home, contentDescription = "")
-//                        }
-//                    }
-//                }
-//            }
+        // Diálogo de opciones
+        if (showDialog.value) {
+            Dialog(onDismissRequest = { showDialog.value = false }) {
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(20.dp))
+                        .background(buttonGreen)
+                        .border(3.dp, darkGreen, RoundedCornerShape(20.dp))
+                        .padding(Dimensions.heightPercentage(3f))
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            "OPCIONES",
+                            fontSize = 36.sp,
+                            fontFamily = fuentePrincipal,
+                            color = Color.Black,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(20.dp))
+                        Divider(color = darkGreen, thickness = 2.dp)
+                        Spacer(modifier = Modifier.height(20.dp))
+
+                        // Opción de sonido
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                "🔊 Sonido:",
+                                fontSize = 24.sp,
+                                fontFamily = fuentePrincipal,
+                                color = Color.Black
+                            )
+                            Switch(
+                                checked = musicEnabled,
+                                onCheckedChange = { onMusicToggle(!musicEnabled) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = darkGreen
+                                )
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        // Opción de idioma
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                "🌐 Idioma: Español",
+                                fontSize = 24.sp,
+                                fontFamily = fuentePrincipal,
+                                color = Color.Black
+                            )
+                            Text(
+                                "(Proximamente...)",
+                                fontSize = 16.sp,
+                                fontFamily = fuentePrincipal,
+                                color = Color.Black.copy(alpha = 0.6f),
+                                modifier = Modifier.padding(start = 8.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.height(30.dp))
+
+                        // Botón cerrar
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(darkGreen)
+                                .clickable { showDialog.value = false }
+                                .padding(horizontal = 40.dp, vertical = 12.dp)
+                        ) {
+                            Text(
+                                "CERRAR",
+                                fontSize = 24.sp,
+                                fontFamily = fuentePrincipal,
+                                color = Color.White
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
 }
-
