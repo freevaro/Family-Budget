@@ -32,6 +32,22 @@ import androidx.compose.ui.unit.dp
 import com.example.tfg.R
 
 
+/**
+ * Pantalla de calendario que muestra los días del mes, el día actual y un resumen de actividad.
+ *
+ * Representa un calendario mensual con una cuadrícula de días, y un resumen inferior del día actual.
+ * Se puede navegar entre meses (aunque la lógica de navegación aún no está implementada).
+ *
+ * @param currentDay Día actual seleccionado (por defecto, 10).
+ * @param totalDays Número total de días del mes (por defecto, 31).
+ * @param onNavigateToHome Acción al pulsar el botón "Inicio".
+ * @param onNavigateToBusiness Acción al pulsar "Negocios".
+ * @param onNavigateToCalendar Acción al pulsar "Calendario".
+ * @param onNavigateToShop Acción al pulsar "Tienda".
+ * @param onNavigateToSettings Acción al pulsar "Opciones".
+ * @param modifier Modificador para aplicar al contenedor principal.
+ */
+
 @Composable
 fun CalendarScreen(
     currentDay: Int = 10,
@@ -260,6 +276,18 @@ fun CalendarScreen(
         }
     }
 }
+
+/**
+ * Representa un día individual en el calendario.
+ *
+ * El día actual se destaca con un fondo verde oscuro. Al hacer clic se podría implementar lógica adicional.
+ *
+ * @param day Día del mes.
+ * @param isCurrentDay Indica si es el día actual.
+ * @param fuenteprincipal Fuente personalizada del texto.
+ * @param darkGreen Color del día seleccionado.
+ * @param lightGreen Color base del calendario.
+ */
 
 @Composable
 fun CalendarDay(

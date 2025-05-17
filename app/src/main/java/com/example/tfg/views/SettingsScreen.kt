@@ -29,6 +29,23 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.navigation.NavHostController
 import com.example.tfg.R
 
+/**
+ * Pantalla de configuración e inventario del juego.
+ *
+ * Muestra un resumen agrupado del inventario del jugador (negocios, comidas, tarjetas),
+ * junto con los elementos en una cuadrícula categorizada.
+ * También integra navegación entre pantallas del juego.
+ *
+ * @param onNavigateToHome Navegación a la pantalla de inicio del juego.
+ * @param onNavigateToBusiness Navegación a la pantalla de negocios.
+ * @param onNavigateToCalendar Navegación a la pantalla de calendario.
+ * @param onNavigateToShop Navegación a la pantalla de tienda.
+ * @param onNavigateToSettings Navegación a la propia pantalla de ajustes.
+ * @param navController Controlador de navegación.
+ * @param musicEnabled Estado actual de la música.
+ * @param onMusicToggle Callback para activar o desactivar la música.
+ */
+
 @Composable
 fun SettingsScreen(
     onNavigateToHome: () -> Unit = {},
@@ -248,6 +265,18 @@ fun SettingsScreen(
     }
 }
 
+/**
+ * Muestra un bloque estadístico dentro del resumen de inventario.
+ *
+ * Incluye un icono, una etiqueta y un valor numérico.
+ *
+ * @param icon Icono representativo de la categoría.
+ * @param label Etiqueta del tipo de ítem (por ejemplo: "Negocios").
+ * @param value Cantidad total de ítems de ese tipo.
+ * @param fuenteprincipal Fuente a utilizar.
+ * @param darkGreen Color temático del texto e icono.
+ */
+
 @Composable
 fun InventoryStat(
     icon: ImageVector,
@@ -282,6 +311,17 @@ fun InventoryStat(
         )
     }
 }
+
+/**
+ * Representa visualmente un ítem del inventario en una tarjeta con icono y contador.
+ *
+ * El contador aparece solo si hay más de una unidad del mismo ítem.
+ *
+ * @param item Objeto [InventoryItem] con los datos a mostrar.
+ * @param fuenteprincipal Fuente tipográfica personalizada.
+ * @param darkGreen Color del texto y borde.
+ * @param lightGreen Color de fondo para la tarjeta del ítem.
+ */
 
 @Composable
 fun InventoryItemCard(
@@ -359,6 +399,15 @@ fun InventoryItemCard(
         )
     }
 }
+
+/**
+ * Modelo de datos para representar un ítem del inventario del jugador.
+ *
+ * @param name Nombre del ítem.
+ * @param quantity Cantidad en posesión.
+ * @param icon Icono gráfico representativo.
+ * @param category Categoría del ítem (por ejemplo: "Negocio", "Comida", "Tarjeta").
+ */
 
 data class InventoryItem(
     val name: String,

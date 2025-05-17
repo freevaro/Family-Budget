@@ -8,11 +8,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,7 +24,23 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tfg.R
+import com.example.tfg.viewmodel.NegocioViewModel
+import com.example.tfg.entity.Negocio
+
+/**
+ * Pantalla de visualización de negocios.
+ *
+ * Muestra un listado en forma de cuadrícula de los negocios disponibles, con un diseño personalizado
+ * y filtrado por categorías. Los datos se obtienen del [NegocioViewModel] usando LiveData.
+ *
+ * @param onNavigateToHome Acción al pulsar "Inicio" en la barra de navegación.
+ * @param onNavigateToBusiness Acción al pulsar "Negocios".
+ * @param onNavigateToCalendar Acción al pulsar "Calendario".
+ * @param onNavigateToShop Acción al pulsar "Tienda".
+ * @param onNavigateToSettings Acción al pulsar "Opciones".
+ */
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -38,29 +54,15 @@ fun BusinessScreen(
     val primaryGreen = Color(0xFF9CCD5C)
     val darkGreen = Color(0xFF6B9A2F)
     val lightGreen = Color(0xFFB5E878)
-    val fuenteprincipal = FontFamily(Font(R.font.barriecito_regular))
+    val fuentePrincipal = FontFamily(Font(R.font.barriecito_regular))
 
-    // Categorías de negocios
+    // Obtener ViewModel y lista de Negocios desde la base de datos
+    val viewModel: NegocioViewModel = viewModel()
+    val negocios by viewModel.allNegocios.observeAsState(emptyList())
+
+    // Categorías de filtro (basadas en el campo "categoria" de cada Negocio)
     val categories = listOf("Todos", "Negocios", "Servicios", "Comercios", "Otros")
     var selectedCategory by remember { mutableStateOf("Todos") }
-
-    // Negocios de ejemplo
-    val businesses = remember {
-        listOf(
-            Business("Cafetería", 50, Icons.Default.LocalCafe),
-            Business("Restaurante", 80, Icons.Default.Restaurant),
-            Business("Tienda", 60, Icons.Default.Store),
-            Business("Gimnasio", 70, Icons.Default.FitnessCenter),
-            Business("Librería", 40, Icons.Default.MenuBook),
-            Business("Farmacia", 90, Icons.Default.LocalPharmacy),
-            Business("Cine", 100, Icons.Default.LocalMovies),
-            Business("Hotel", 120, Icons.Default.Hotel),
-            Business("Peluquería", 30, Icons.Default.ContentCut),
-            Business("Supermercado", 110, Icons.Default.ShoppingCart),
-            Business("Taller", 65, Icons.Default.Build),
-            Business("Panadería", 45, Icons.Default.Cake)
-        )
-    }
 
     Box(
         modifier = Modifier
@@ -89,7 +91,7 @@ fun BusinessScreen(
             ) {
                 Icon(
                     imageVector = Icons.Default.Business,
-                    contentDescription = "Business",
+                    contentDescription = "Negocios",
                     tint = Color.Black,
                     modifier = Modifier
                         .size(Dimensions.widthPercentage(10f))
@@ -100,20 +102,23 @@ fun BusinessScreen(
                     color = Color.Black,
                     fontSize = Dimensions.responsiveSp(28f),
                     fontWeight = FontWeight.Bold,
-                    fontFamily = fuenteprincipal
+                    fontFamily = fuentePrincipal
                 )
             }
 
-            // Negocios
+            // Grid de Negocios
             LazyVerticalGrid(
                 columns = GridCells.Fixed(3),
                 contentPadding = PaddingValues(bottom = Dimensions.heightPercentage(10f)),
                 modifier = Modifier.weight(1f)
             ) {
-                items(businesses) { business ->
-                    BusinessCard(
-                        business = business,
-                        fuenteprincipal = fuenteprincipal,
+                items(
+                    items = negocios.filter { selectedCategory == "Todos" || it.categoria == selectedCategory },
+                    key = { negocio -> negocio.id }
+                ) { negocio ->
+                    NegocioCard(
+                        negocio = negocio,
+                        fuentePrincipal = fuentePrincipal,
                         darkGreen = darkGreen,
                         lightGreen = lightGreen
                     )
@@ -123,10 +128,21 @@ fun BusinessScreen(
     }
 }
 
+/**
+ * Composable que representa una tarjeta individual para mostrar un [Negocio].
+ *
+ * Incluye un icono, el nombre del negocio y los ingresos diarios.
+ *
+ * @param negocio Objeto [Negocio] a mostrar.
+ * @param fuentePrincipal Fuente usada para el texto.
+ * @param darkGreen Color verde oscuro del tema.
+ * @param lightGreen Color verde claro del tema.
+ */
+
 @Composable
-fun BusinessCard(
-    business: Business,
-    fuenteprincipal: FontFamily,
+fun NegocioCard(
+    negocio: Negocio,
+    fuentePrincipal: FontFamily,
     darkGreen: Color,
     lightGreen: Color
 ) {
@@ -136,6 +152,7 @@ fun BusinessCard(
             .padding(Dimensions.widthPercentage(2f))
             .fillMaxWidth()
     ) {
+        val icon = iconFromString(negocio.icon)
         // Icono circular del negocio
         Box(
             contentAlignment = Alignment.Center,
@@ -146,8 +163,8 @@ fun BusinessCard(
                 .clickable { /* Lógica para ver detalles */ }
         ) {
             Icon(
-                imageVector = business.icon,
-                contentDescription = business.name,
+                imageVector = icon,
+                contentDescription = negocio.nombre,
                 tint = darkGreen,
                 modifier = Modifier.size(Dimensions.widthPercentage(10f))
             )
@@ -155,8 +172,8 @@ fun BusinessCard(
 
         // Nombre del negocio
         Text(
-            text = business.name,
-            fontFamily = fuenteprincipal,
+            text = negocio.nombre,
+            fontFamily = fuentePrincipal,
             fontSize = Dimensions.responsiveSp(14f),
             color = Color.White,
             textAlign = TextAlign.Center,
@@ -167,8 +184,8 @@ fun BusinessCard(
 
         // Ingresos diarios
         Text(
-            text = "$${business.dailyIncome}/día",
-            fontFamily = fuenteprincipal,
+            text = "${'$'}${negocio.ingresos.toInt()}/día",
+            fontFamily = fuentePrincipal,
             fontSize = Dimensions.responsiveSp(12f),
             color = Color.White.copy(alpha = 0.8f),
             textAlign = TextAlign.Center
@@ -176,8 +193,78 @@ fun BusinessCard(
     }
 }
 
-data class Business(
-    val name: String,
-    val dailyIncome: Int,
-    val icon: ImageVector
-)
+
+
+/**
+ * Mapea un nombre de icono (guardado como texto en la base de datos) a su correspondiente [ImageVector].
+ *
+ * @param name Nombre del icono como string (por ejemplo: `"LocalCafe"`).
+ * @return [ImageVector] correspondiente al nombre. Si no coincide, devuelve `Icons.Default.Storefront`.
+ */
+
+// Función para mapear el nombre del icono guardado en la base de datos a un ImageVector
+fun iconFromString(name: String): ImageVector = when (name) {
+    "LocalCafe" -> Icons.Default.LocalCafe
+    "Restaurant" -> Icons.Default.Restaurant
+    "Store" -> Icons.Default.Store
+    "FitnessCenter" -> Icons.Default.FitnessCenter
+    "MenuBook" -> Icons.Default.MenuBook
+    "LocalPharmacy" -> Icons.Default.LocalPharmacy
+    "LocalMovies" -> Icons.Default.LocalMovies
+    "Hotel" -> Icons.Default.Hotel
+    "ContentCut" -> Icons.Default.ContentCut
+    "ShoppingCart" -> Icons.Default.ShoppingCart
+    "Build" -> Icons.Default.Build
+    "Cake" -> Icons.Default.Cake
+    "LocalDrink" -> Icons.Default.LocalDrink
+    "Newspaper" -> Icons.Default.Newspaper
+    "Icecream" -> Icons.Default.Icecream
+    "PhoneIphone" -> Icons.Default.PhoneIphone
+    "LocalCarWash" -> Icons.Default.LocalCarWash
+    "Fastfood" -> Icons.Default.Fastfood
+    "LocalGroceryStore" -> Icons.Default.LocalGroceryStore
+    "CardGiftcard" -> Icons.Default.CardGiftcard
+    "PedalBike" -> Icons.Default.PedalBike
+    "Checkroom" -> Icons.Default.Checkroom
+    "PhotoCamera" -> Icons.Default.PhotoCamera
+    "Pets" -> Icons.Default.Pets
+    "LocalPostOffice" -> Icons.Default.LocalPostOffice
+    "WbSunny" -> Icons.Default.WbSunny
+    "Toys" -> Icons.Default.Toys
+    "RollerSkating" -> Icons.Default.RollerSkating
+    "Coffee" -> Icons.Default.Coffee
+    "Computer" -> Icons.Default.Computer
+    "Draw" -> Icons.Default.Draw
+    "ChildCare" -> Icons.Default.ChildCare
+    "TravelExplore" -> Icons.Default.TravelExplore
+    "Storefront" -> Icons.Default.Storefront
+    "Language" -> Icons.Default.Language
+    "CarRepair" -> Icons.Default.CarRepair
+    "BikeScooter" -> Icons.Default.BikeScooter
+    "DesignServices" -> Icons.Default.DesignServices
+    "BakeryDining" -> Icons.Default.BakeryDining
+    "Spa" -> Icons.Default.Spa
+    "Book" -> Icons.Default.Book
+    "ShoppingBasket" -> Icons.Default.ShoppingBasket
+    "FoodBank" -> Icons.Default.FoodBank
+    "Shop" -> Icons.Default.Shop
+    "Workspaces" -> Icons.Default.Workspaces
+    "RestaurantMenu" -> Icons.Default.RestaurantMenu
+    "FaceRetouchingNatural" -> Icons.Default.FaceRetouchingNatural
+    "Code" -> Icons.Default.Code
+    "PrecisionManufacturing" -> Icons.Default.PrecisionManufacturing
+    "Movie" -> Icons.Default.Movie
+    "RocketLaunch" -> Icons.Default.RocketLaunch
+    "OndemandVideo" -> Icons.Default.OndemandVideo
+    "Recycling" -> Icons.Default.Recycling
+    "SmartToy" -> Icons.Default.SmartToy
+    "Sailing" -> Icons.Default.Sailing
+    "VideogameAsset" -> Icons.Default.VideogameAsset
+    "Science" -> Icons.Default.Science
+    "LocalHospital" -> Icons.Default.LocalHospital
+    "ElectricCar" -> Icons.Default.ElectricCar
+    "Tv" -> Icons.Default.Tv
+    "SatelliteAlt" -> Icons.Default.SatelliteAlt
+    "ShoppingBag" -> Icons.Default.ShoppingBag
+    else -> Icons.Default.Storefront
+}

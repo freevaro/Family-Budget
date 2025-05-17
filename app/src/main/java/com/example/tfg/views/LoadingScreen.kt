@@ -36,6 +36,15 @@ import com.example.tfg.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * Pantalla de carga inicial de la aplicación.
+ *
+ * Muestra un título, un icono animado de carga y una barra de progreso.
+ * Una vez completada la animación, navega automáticamente a la pantalla principal.
+ *
+ * @param modifier Modificador externo opcional para personalizar el contenedor.
+ * @param navController Controlador de navegación para redirigir tras completar la carga.
+ */
 
 @Composable
 
@@ -103,6 +112,15 @@ fun LoadingScreen(modifier: Modifier = Modifier, navController: NavController){
             }
         }
     }
+
+/**
+ * Simula una carga progresiva llamando al callback con el valor actual.
+ *
+ * Esta función se puede utilizar para actualizar visualmente una barra de progreso.
+ *
+ * @param updateProgress Función lambda que recibe el valor del progreso entre 0f y 1f.
+ */
+
 suspend fun loadProgress(updateProgress: (Float) -> Unit) {
     for (i in 1..100) {
         updateProgress(i.toFloat() / 100)

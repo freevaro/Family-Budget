@@ -22,6 +22,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.tfg.R
 
+/**
+ * Pantalla de la tienda del juego.
+ *
+ * Permite al jugador visualizar productos categorizados como negocios, comidas y tarjetas bonus.
+ * Los productos están organizados por secciones y subcategorías, cada uno con su nombre, icono, precio y botón de compra.
+ *
+ * @param onNavigateToHome Navega a la pantalla de inicio del juego.
+ * @param onNavigateToBusiness Navega a la pantalla de negocios.
+ * @param onNavigateToCalendar Navega a la pantalla del calendario.
+ * @param onNavigateToShop Navega a esta misma pantalla (tienda).
+ * @param onNavigateToSettings Navega a la pantalla de ajustes/inventario.
+ */
+
 @Composable
 fun ShopScreen(
     onNavigateToHome: () -> Unit = {},
@@ -101,7 +114,8 @@ fun ShopScreen(
                         .padding(end = Dimensions.widthPercentage(2f))
                 )
                 Text(
-                    text = "TIENDA",
+                    text = "TIENDA" +
+                            "",
                     color = Color.Black,
                     fontSize = Dimensions.responsiveSp(28f),
                     fontWeight = FontWeight.Bold,
@@ -182,6 +196,15 @@ fun ShopScreen(
     }
 }
 
+/**
+ * Componente que representa el encabezado de una categoría (como "NEGOCIOS", "COMIDAS", etc).
+ *
+ * @param title Título de la categoría.
+ * @param fuenteprincipal Fuente personalizada del texto.
+ * @param darkGreen Color de fondo.
+ * @param lightGreen Color no usado aquí, pero mantenido por consistencia con otras funciones.
+ */
+
 @Composable
 fun CategorySection(
     title: String,
@@ -213,6 +236,16 @@ fun CategorySection(
         )
     }
 }
+
+/**
+ * Sección para mostrar una subcategoría de productos dentro de una categoría principal.
+ *
+ * @param title Nombre de la subcategoría (por ejemplo, "Bajo", "Medio", "Alto").
+ * @param products Lista de productos que pertenecen a esta subcategoría.
+ * @param fuenteprincipal Fuente para los textos.
+ * @param darkGreen Color del texto principal.
+ * @param lightGreen Color del fondo de las tarjetas de productos.
+ */
 
 @Composable
 fun SubcategorySection(
@@ -252,6 +285,15 @@ fun SubcategorySection(
     }
 }
 
+/**
+ * Fila horizontal de productos con disposición uniforme.
+ *
+ * @param products Lista de productos que se mostrarán en una sola fila.
+ * @param fuenteprincipal Fuente tipográfica.
+ * @param darkGreen Color temático oscuro.
+ * @param lightGreen Color temático claro.
+ */
+
 @Composable
 fun ProductRow(
     products: List<Product>,
@@ -276,6 +318,18 @@ fun ProductRow(
         }
     }
 }
+
+/**
+ * Tarjeta visual para representar un producto en la tienda.
+ *
+ * Contiene icono, nombre, precio y un botón de compra.
+ *
+ * @param product Objeto del producto a mostrar.
+ * @param fuenteprincipal Fuente para los textos.
+ * @param darkGreen Color base del botón y textos destacados.
+ * @param lightGreen Color del fondo de la tarjeta.
+ * @param modifier Modificador opcional para personalizar el diseño exterior.
+ */
 
 @Composable
 fun ProductCard(
@@ -369,6 +423,14 @@ fun ProductCard(
         }
     }
 }
+
+/**
+ * Modelo de datos que representa un producto disponible en la tienda del juego.
+ *
+ * @param name Nombre del producto.
+ * @param price Precio en dinero del juego.
+ * @param icon Icono representativo del producto.
+ */
 
 data class Product(
     val name: String,

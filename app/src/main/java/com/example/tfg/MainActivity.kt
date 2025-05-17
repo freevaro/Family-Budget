@@ -34,11 +34,26 @@ import com.example.tfg.ui.theme.TFGTheme
 import com.example.tfg.views.*
 
 // Singleton para gestionar el audio de la app
+
+/**
+ * Representa el estado actual del audio (activado o desactivado).
+ *
+ * @property enabled Indica si el audio está habilitado.
+ */
 data class AudioManagerState(var enabled: Boolean = true)
+
+
 object AudioManager {
     private var currentResId: Int? = null
     private var mediaPlayer: MediaPlayer? = null
 
+    /**
+     * Reproduce un archivo de audio dado si está habilitado y no se está reproduciendo ya.
+     *
+     * @param context Contexto de la aplicación necesario para crear el [MediaPlayer].
+     * @param resId ID del recurso de audio a reproducir.
+     * @param enabled Indica si el audio debe reproducirse.
+     */
     fun play(context: Context, @RawRes resId: Int, enabled: Boolean) {
         if (!enabled) return stop()
         if (currentResId == resId && mediaPlayer?.isPlaying == true) return
@@ -53,6 +68,9 @@ object AudioManager {
         currentResId = resId
     }
 
+    /**
+     * Detiene y libera el recurso de audio si está siendo reproducido.
+     */
     fun stop() {
         mediaPlayer?.let {
             if (it.isPlaying) it.stop()
@@ -63,6 +81,11 @@ object AudioManager {
     }
 }
 
+/**
+ * Actividad principal de la aplicación.
+ * Configura el tema, el controlador de navegación y gestiona el estado global de la música,
+ * así como las transiciones entre pantallas.
+ */
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -83,7 +106,7 @@ class MainActivity : ComponentActivity() {
                 // Estado global de música
                 var musicEnabled by rememberSaveable { mutableStateOf(true) }
 
-                // Reproducir/ detener según ruta y estado
+                // Reproduce o detiene la música según la pantalla actual y el estado del audio
                 LaunchedEffect(currentRoute, musicEnabled) {
                     when (currentRoute) {
                         "loading" -> AudioManager.stop()
@@ -97,7 +120,7 @@ class MainActivity : ComponentActivity() {
                     }
                 }
 
-                // Detener audio en background
+                // Detiene el audio cuando la actividad pasa al background
                 DisposableEffect(lifecycle) {
                     val observer = LifecycleEventObserver { _: LifecycleOwner, event ->
                         if (event == Lifecycle.Event.ON_STOP) AudioManager.stop()
@@ -126,11 +149,14 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
+                    // Controla la navegación entre pantallas
                     NavHost(
                         navController = navController,
                         startDestination = "loading",
                         modifier = Modifier.padding(innerPadding)
                     ) {
+                        // Aquí se declaran todas las pantallas disponibles
+                        // Se actualiza el valor de currentScreen en cada composable
                         composable("loading") {
                             currentScreen = "loading"
                             LoadingScreen(Modifier, navController)
@@ -208,14 +234,16 @@ class MainActivity : ComponentActivity() {
                     }
                 }
             }
-
-
-
-
-
         }
     }
 
+    /**
+     * Define las transiciones de entrada y salida entre pantallas con deslizamiento y fundido.
+     *
+     * @param from Pantalla de origen.
+     * @param to Pantalla de destino.
+     * @return Transición de entrada compuesta.
+     */
     @OptIn(ExperimentalAnimationApi::class)
     private fun AnimatedContentTransitionScope<NavBackStackEntry>.slideEnterTransition(
         from: String?, to: String?

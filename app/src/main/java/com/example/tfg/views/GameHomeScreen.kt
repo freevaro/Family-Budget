@@ -48,6 +48,30 @@ import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavHostController
 import com.example.tfg.R
 
+/**
+ * Pantalla principal del juego donde se muestra la información del jugador actual,
+ * estadísticas financieras y clasificación de los jugadores.
+ *
+ * También incluye el botón para finalizar turno y un diálogo de opciones.
+ *
+ * @param playerName Nombre del jugador activo.
+ * @param currentDay Día actual del calendario.
+ * @param totalDays Total de días del mes (no usado directamente, pero puede servir para lógica futura).
+ * @param cash Dinero en efectivo actual del jugador.
+ * @param passiveIncome Ingresos pasivos diarios.
+ * @param dailyExpenses Gastos diarios.
+ * @param onEndTurnClick Acción al pulsar "FINALIZAR TURNO".
+ * @param onNavigateToHome Navegación a la pantalla principal.
+ * @param onNavigateToBusiness Navegación a la pantalla de negocios.
+ * @param onNavigateToCalendar Navegación a la pantalla de calendario.
+ * @param onNavigateToShop Navegación a la tienda.
+ * @param onNavigateToSettings Navegación a la configuración.
+ * @param navController Controlador de navegación.
+ * @param musicEnabled Estado actual de la música.
+ * @param onMusicToggle Acción para activar/desactivar la música.
+ * @param players Lista de jugadores y su posición.
+ */
+
 @Composable
 fun GameHomeScreen(
     playerName: String = "David",
@@ -338,6 +362,10 @@ fun GameHomeScreen(
     }
 }
 
+/**
+ * Fondo de pantalla con degradado vertical.
+ */
+
 @Composable
 fun PatternBackground() {
     Box(modifier = Modifier
@@ -350,6 +378,14 @@ fun PatternBackground() {
         )
     )
 }
+
+/**
+ * Fila reutilizable que muestra una estadística financiera con icono, etiqueta y valor.
+ *
+ * @param icon Icono representativo de la métrica.
+ * @param label Texto descriptivo (por ejemplo, "Ingresos pasivos").
+ * @param value Valor asociado (por ejemplo, "$80").
+ */
 
 @Composable
 fun FinancialStatRow(
@@ -398,6 +434,16 @@ data class Player(
     val money: Int,
     val position: Int
 )
+
+/**
+ * Representa la información de un jugador en la tabla de posiciones.
+ *
+ * @param position Posición actual del jugador.
+ * @param player Datos del jugador (nombre, dinero, posición).
+ * @param isCurrentPlayer Indica si este jugador es el actual.
+ * @param fuenteprincipal Fuente personalizada usada para el texto.
+ * @param darkGreen Color principal para resaltar al jugador actual.
+ */
 
 @Composable
 fun PlayerPositionRow(

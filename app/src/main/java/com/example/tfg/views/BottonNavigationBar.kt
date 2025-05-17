@@ -28,6 +28,20 @@ import androidx.compose.ui.unit.dp
 import com.example.tfg.R
 import com.example.tfg.views.Dimensions
 
+/**
+ * Barra de navegación inferior personalizada.
+ *
+ * Muestra iconos para navegar entre las distintas pantallas de la app.
+ * La pantalla actual se resalta mediante un mayor contraste en el icono y el texto.
+ *
+ * @param onNavigateToHome Callback para navegar a la pantalla de inicio.
+ * @param onNavigateToBusiness Callback para navegar a la pantalla de negocios.
+ * @param onNavigateToCalendar Callback para navegar a la pantalla de calendario.
+ * @param onNavigateToShop Callback para navegar a la pantalla de la tienda.
+ * @param onNavigateToSettings Callback para navegar a la pantalla de opciones.
+ * @param currentScreen Nombre de la pantalla actual, utilizado para resaltar el ítem seleccionado.
+ * @param modifier Modificador opcional para personalizar la barra.
+ */
 @Composable
 fun BottomNavigationBar(
     onNavigateToHome: () -> Unit,
@@ -87,6 +101,16 @@ fun BottomNavigationBar(
     }
 }
 
+/**
+ * Elemento individual de la barra de navegación inferior.
+ *
+ * Muestra un icono y un texto debajo. Cambia su apariencia si está seleccionado.
+ *
+ * @param icon Icono a mostrar.
+ * @param label Texto descriptivo del ítem.
+ * @param onClick Acción a ejecutar al pulsar el ítem.
+ * @param isSelected Indica si este ítem está actualmente seleccionado.
+ */
 @Composable
 fun BottomNavItem(
     icon: androidx.compose.ui.graphics.vector.ImageVector,
