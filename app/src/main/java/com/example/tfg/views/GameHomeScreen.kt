@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.runtime.getValue
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,6 +32,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -45,8 +48,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.tfg.R
+import com.example.tfg.viewmodel.EstadoTurno
+import com.example.tfg.viewmodel.JugadorViewModel
+import com.example.tfg.viewmodel.TurnoManager
 
 /**
  * Pantalla principal del juego donde se muestra la información del jugador actual,
@@ -74,13 +81,6 @@ import com.example.tfg.R
 
 @Composable
 fun GameHomeScreen(
-    playerName: String = "David",
-    currentDay: Int = 7,
-    totalDays: Int = 30,
-    cash: Int = 600,
-    passiveIncome: Int = 80,
-    dailyExpenses: Int = 50,
-    onEndTurnClick: () -> Unit = {},
     onNavigateToHome: () -> Unit = {},
     onNavigateToBusiness: () -> Unit = {},
     onNavigateToCalendar: () -> Unit = {},
@@ -104,6 +104,37 @@ fun GameHomeScreen(
     val fuenteprincipal = FontFamily(
         Font(R.font.barriecito_regular)
     )
+    val jugadoresViewModel : JugadorViewModel = viewModel()
+    val jugadores by jugadoresViewModel.allJugadores.observeAsState(emptyList())
+
+    val players = remember(jugadores) {
+        jugadores
+            .sortedByDescending { it.dinero }
+            .mapIndexed { index, jugador ->
+                Player(
+                    name = jugador.nombre,
+                    money = jugador.dinero.toInt(),
+                    position = index + 1
+                )
+            }
+    }
+    val diaNum by remember {
+        derivedStateOf { EstadoTurno.diaNum }
+    }
+    val turnoName by remember {
+        derivedStateOf { EstadoTurno.nombre }
+    }
+    val efectivo by remember {
+        derivedStateOf { EstadoTurno.dinero }
+    }
+    val ingresos by remember {
+        derivedStateOf { EstadoTurno.ingresos }
+    }
+    val gastos by remember {
+        derivedStateOf { EstadoTurno.costes }
+    }
+
+
 
     Box(
         modifier = Modifier
@@ -150,7 +181,7 @@ fun GameHomeScreen(
                             modifier = Modifier.size(Dimensions.widthPercentage(6f))
                         )
                         Text(
-                            text = "Día $currentDay",
+                            text = "Día $diaNum",
                             color = Color.White,
                             fontFamily = fuenteprincipal,
                             fontSize = Dimensions.responsiveSp(14f)
@@ -166,7 +197,7 @@ fun GameHomeScreen(
                     shape = RoundedCornerShape(Dimensions.widthPercentage(4f))
                 ) {
                     Text(
-                        text = "Turno de "+playerName,
+                        text = "Turno de $turnoName",
                         fontSize = Dimensions.responsiveSp(24f),
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
@@ -208,22 +239,22 @@ fun GameHomeScreen(
                 shape = RoundedCornerShape(Dimensions.widthPercentage(4f))
             ) {
                 Column(modifier = Modifier.padding(Dimensions.widthPercentage(4f))) {
-                    FinancialStatRow(Icons.Default.AttachMoney, "Dinero en efectivo", "$$cash")
+                    FinancialStatRow(Icons.Default.AttachMoney, "Dinero en efectivo", "$$efectivo")
                     Divider(
                         color = darkGreen.copy(alpha = 0.3f),
                         modifier = Modifier.padding(vertical = Dimensions.heightPercentage(1f))
                     )
-                    FinancialStatRow(Icons.Default.TrendingUp, "Ingresos pasivos", "$$passiveIncome")
+                    FinancialStatRow(Icons.Default.TrendingUp, "Ingresos pasivos", "$$ingresos")
                     Divider(
                         color = darkGreen.copy(alpha = 0.3f),
                         modifier = Modifier.padding(vertical = Dimensions.heightPercentage(1f))
                     )
-                    FinancialStatRow(Icons.Default.TrendingDown, "Gasto diario", "$$dailyExpenses")
+                    FinancialStatRow(Icons.Default.TrendingDown, "Gasto diario", "$$gastos")
                 }
             }
 
             Button(
-                onClick = onEndTurnClick,
+                onClick = { TurnoManager.next() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(Dimensions.heightPercentage(9f))
@@ -271,7 +302,7 @@ fun GameHomeScreen(
                         PlayerPositionRow(
                             position = index + 1,
                             player = player,
-                            isCurrentPlayer = player.name == playerName,
+                            isCurrentPlayer = player.name == turnoName,
                             fuenteprincipal = fuenteprincipal,
                             darkGreen = darkGreen
                         )

@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
@@ -29,15 +30,23 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.example.tfg.AppDatabase
 import com.example.tfg.R
+import com.example.tfg.viewmodel.PartidaDatos.partidaId
+import com.example.tfg.viewmodel.PartidaStartViewModel
+import com.example.tfg.viewmodel.TurnoManager
+import com.example.tfg.views.NumJugadores.playersCount
 import kotlin.random.Random
 
 /**
  * Datos necesarios para representar un icono animado cayendo en la pantalla.
  */
 data class FallingIcon(var x: Float, val speed: Float, var y: Float, val rotation: Float, val scale: Float)
-
+object NumJugadores {
+    var playersCount : Int = 0
+}
 /**
  * Pantalla principal del juego que actúa como menú de inicio.
  */
@@ -63,12 +72,16 @@ fun MainScreen(
     val buttonGreen = Color(0xFF9CCD5C)
     val darkGreen = Color(0xFF759E73)
 
+    val context = LocalContext.current
+    val db = remember { AppDatabase.getInstance(context) }
+
     // Estados para diálogos
     val showOptionsDialog = remember { mutableStateOf(false) }
     val showPlayerDialog = remember { mutableStateOf(false) }
 
     // Estados para selección de jugadores
-    val playersCount = remember { mutableStateOf(2) }
+
+
     val playerNames = remember { mutableStateListOf("", "", "", "") }
 
     // Animaciones título, iconos y botones (omitidas en este bloque para brevedad)
@@ -286,8 +299,8 @@ fun MainScreen(
                                     modifier = Modifier
                                         .size(40.dp)
                                         .clip(RoundedCornerShape(8.dp))
-                                        .background(if (playersCount.value == num) darkGreen else buttonGreen)
-                                        .clickable { playersCount.value = num }
+                                        .background(if (playersCount == num) darkGreen else buttonGreen)
+                                        .clickable { playersCount = num }
                                 ) {
                                     Text(num.toString(), fontFamily = fuentePrincipal, fontSize = 20.sp, color = Color.Black)
                                 }
@@ -296,7 +309,7 @@ fun MainScreen(
                         Spacer(Modifier.height(16.dp))
                         // Campos de texto para nombres
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            (0 until playersCount.value).forEach { index ->
+                            (0 until playersCount).forEach { index ->
                                 OutlinedTextField(
                                     value = playerNames[index],
                                     onValueChange = { playerNames[index] = it },
@@ -308,12 +321,14 @@ fun MainScreen(
                         }
                         Spacer(Modifier.height(24.dp))
                         // Botón JUGAR dentro del diálogo
-                        val allNamesFilled = playerNames.take(playersCount.value).all { it.isNotBlank() }
+                        val partidaVM: PartidaStartViewModel = viewModel()
+                        val allNamesFilled = playerNames.take(playersCount).all { it.isNotBlank() }
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
                                 .background(if (allNamesFilled) darkGreen else darkGreen.copy(alpha = 0.5f))
                                 .clickable(enabled = allNamesFilled) {
+                                    partidaVM.empezarPartida(playerNames.take(playersCount))
                                     showPlayerDialog.value = false
                                     // Navegar a la pantalla de juego pasando parámetros
                                     navController.navigate("pantalla_juego")

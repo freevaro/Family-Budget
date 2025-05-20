@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.androidx.room.runtime.android)
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.room.ktx)
+    implementation("androidx.activity:activity-compose:1.6.1")
 
     // MVVM / ViewModel
     implementation(libs.androidx.lifecycle.runtime.ktx)

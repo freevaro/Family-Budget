@@ -177,7 +177,6 @@ class MainActivity : ComponentActivity() {
                         ) {
                             currentScreen = "pantalla_juego"
                             GameHomeScreen(
-                                onEndTurnClick = {},
                                 onNavigateToHome = { navController.navigate("pantalla_juego") },
                                 onNavigateToBusiness = { navController.navigate("pantalla_negocios") },
                                 onNavigateToCalendar = { navController.navigate("pantalla_calendario") },

@@ -29,11 +29,13 @@ import kotlinx.coroutines.launch
         Negocio::class,
         Tienda::class,
         Inventario::class,
+        InventarioNegocio::class,
         InventarioComida::class,
         InventarioTarjeta::class,
         Partida::class,
         PartidaJugador::class,
-        PartidaDia::class
+        PartidaDia::class,
+        TiendaNegocio::class
     ],
     version = 1,
     exportSchema = false
@@ -64,6 +66,12 @@ abstract class AppDatabase : RoomDatabase() {
      * DAO para acceder a la tabla `Tarjeta`.
      */
     abstract fun tarjetaDao(): TarjetaDao
+
+
+    /**
+     * DAO para acceder a la tabla de relacion `InventarioNegocio`
+     */
+    abstract fun inventarioNegocioDao(): InventarioNegocioDao
 
     /**
      * DAO para acceder a la tabla `Negocio`.
@@ -105,6 +113,13 @@ abstract class AppDatabase : RoomDatabase() {
      */
     abstract fun partidaDiaDao(): PartidaDiaDao
 
+    /**
+     * DAO para acceder a la tabla de relación `TiendaNegocio`.
+     */
+    abstract fun tiendaNegocioDao(): TiendaNegocioDao
+
+
+
     companion object {
         @Volatile
         private var INSTANCE: AppDatabase? = null
@@ -137,6 +152,8 @@ abstract class AppDatabase : RoomDatabase() {
                             val scope = CoroutineScope(Dispatchers.IO)
                             scope.launch {
                                 prepopulateNegocios(getInstance(context).negocioDao())
+                                prepopulateTarjetas(getInstance(context).tarjetaDao())
+                                prepopulateComidas(getInstance(context).comidaDao())
                             }
                         }
                     })
