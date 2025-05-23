@@ -10,9 +10,15 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.*
 import androidx.room.withTransaction
 import com.example.tfg.AppDatabase
+import com.example.tfg.dao.InventarioNegocioWithNegocio
 import com.example.tfg.entity.*
+import com.example.tfg.viewmodel.EstadoTurno.dinero
 import com.example.tfg.viewmodel.PartidaDatos.listaJugadores
 import com.example.tfg.viewmodel.PartidaDatos.partidaId
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
 /**
@@ -34,10 +40,11 @@ object EstadoTurno {
     var diaId         by mutableLongStateOf(0L)
     var diaNum        by mutableIntStateOf(0)
     var inventarioId  by mutableLongStateOf(0L)
+    var jugador       by mutableStateOf<Jugador>(Jugador(idJugador,nombre,dinero.toDouble(),ingresos.toDouble(),costes.toDouble()))
 
     /** Actualiza todas las propiedades a partir de un Jugador y sus datos relacionados */
     fun loadFrom(
-        jugador: Jugador,
+        jugador : Jugador,
         dia: Dia,
         inventario: Inventario
     ) {
@@ -50,46 +57,99 @@ object EstadoTurno {
         inventarioId = inventario.id
         diaNum       = dia.numeroDia
     }
+    fun updateJugador(){
+        jugador = Jugador(idJugador,nombre,dinero.toDouble(),ingresos.toDouble(),costes.toDouble())
+    }
 }
 
 // 3) Un singleton que orquesta la rotación de turnos:
-
 object TurnoManager {
-    private var players: List<Jugador> = emptyList()
-    private var dias:    List<Dia>     = emptyList()
-    private var invs:    List<Inventario> = emptyList()
-    private var index   = 0
-    var playerId : Long = 0L
-    var diaId : Long = 0L
+    private var players: MutableList<Jugador> = mutableListOf()
+    // Ahora almacenamos, para cada jugador, la lista completa de sus días del mes
+    private var diasPorJugador: List<List<Dia>> = emptyList()
+    private var invsPorJugador: List<Inventario> = emptyList()
 
-    /** Inicializa los jugadores (y su Día/Inventario) para la partida */
+    // Índice de jugador actual (0 .. players.size-1)
+    private var index = 0
+
+    // Contador de turno total (número de veces que se ha llamado next())
+    var turno = 0
+
+    var ultimoTurnoGenerado = turno -1
+
+    // Número de día actual (1 .. max días)
+    var diaNum = 1
+        private set
+
+    // IDs expuestos para la UI / Base de datos
+    var playerId: Long = 0L
+        private set
+    var diaId: Long = 0L
+        private set
+
+    /** Inicializa los jugadores y carga todos los Días e Inventarios para el mes */
     suspend fun init(partidaId: Long, db: AppDatabase) {
         val daoJ = db.jugadorDao()
         val daoD = db.diaDao()
         val daoI = db.inventarioDao()
 
-        players = daoJ.getPlayersForPartida(partidaId)
-        // Asumimos que ya existe un Día y un Inventario por jugador
-        dias  = players.map { p -> daoD.getDiaByJugadorAndMes(p.id, /*mesId*/1L) }
-        invs  = players.map { p -> daoI.getByPlayerSync(p.id) }
-        diaId = dias[0].id
-        playerId = players[0].id
+        players = daoJ.getPlayersForPartida(partidaId).toMutableList()  // <-- mutableListOf
+        // Para cada jugador, cargar la lista de 31 días del mes
+        diasPorJugador = players.map { p ->
+            daoD.getDiasByJugadorAndMes(p.id, /* mesId */ 1L)
+        }
+        // Para cada jugador y cada día, cargar su inventario
+        invsPorJugador = daoI.getInventarioByJugador(partidaId)
 
-        // Carga el primer turno
+        // Empezamos en el primer jugador del día 1
         index = 0
-        EstadoTurno.loadFrom(players[0], dias[0], invs[0])
+        diaNum = 1
+        actualizarEstado()
+    }
+
+    /** Llama a esto cuando hayas persistido un cambio en el jugador */
+    fun refreshCurrentPlayerInMemory() {
+        players[index] = EstadoTurno.jugador
+    }
+
+    /** Lógica de avance de día: al completar un ciclo completo de jugadores, sumamos 1 */
+    private fun gestionDia() {
+        // Si acabamos de envolver al primer jugador (antes estábamos en el último)
+        if (index == 0) {
+            diaNum++
+        }
     }
 
     /** Avanza al siguiente jugador y recarga EstadoTurno */
     fun next() {
         if (players.isEmpty()) return
-        index = (index + 1) % players.size
-        EstadoTurno.loadFrom(players[index], dias[index], invs[index])
-        playerId = players[index].id
-        diaId = dias[index].id
 
+        // Avanzamos índice de jugador (y ciclo)
+        index = (index + 1) % players.size
+
+        // Lleva la cuenta de los turnos totales
+        turno++
+
+        // Si acabamos de completar un ciclo completo, avanzamos el día
+        gestionDia()
+
+        // Recargamos el estado con el jugador/día/inventario actuales
+        actualizarEstado()
+    }
+
+    /** Carga los IDs y el EstadoTurno desde los arrays según index y diaNum */
+    private fun actualizarEstado() {
+        val jugador : Jugador  = players[index]
+        // diasPorJugador[index] tiene la lista de días: diaNum-1 es el índice
+        val dia       = diasPorJugador[index].getOrNull(diaNum - 1)
+            ?: error("No existe el día $diaNum para el jugador ${jugador.id}")
+        val inventario = invsPorJugador[index]
+        EstadoTurno.loadFrom(jugador, dia, inventario)
+        playerId = jugador.id
+        diaId    = dia.id
     }
 }
+
 
 
 
@@ -113,7 +173,7 @@ class JugadorViewModel(application: Application) : AndroidViewModel(application)
     private val dao = AppDatabase.getInstance(application).jugadorDao()
     val allJugadores: LiveData<List<Jugador>> = dao.getAll()
     fun insert(j: Jugador)   = viewModelScope.launch { dao.insert(j) }
-    fun update(j: Jugador)   = viewModelScope.launch { dao.update(j) }
+    fun update()   = viewModelScope.launch { dao.update(EstadoTurno.jugador) }
     fun delete(j: Jugador)   = viewModelScope.launch { dao.delete(j) }
 }
 
@@ -159,18 +219,63 @@ class InventarioViewModel(application: Application) : AndroidViewModel(applicati
 
 class InventarioComidaViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = AppDatabase.getInstance(application).inventarioComidaDao()
-    val allItems: LiveData<List<InventarioComida>> = dao.getAll()
+
+    val allItems: StateFlow<List<InventarioComida>> = dao
+        .getAll()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+    fun upsert(item: InventarioComida) = viewModelScope.launch {
+        dao.insert(item)
+    }
+
+    fun remove(item: InventarioComida) = viewModelScope.launch {
+        dao.delete(item)
+    }
     fun insert(ic: InventarioComida) = viewModelScope.launch { dao.insert(ic) }
     fun update(ic: InventarioComida) = viewModelScope.launch { dao.update(ic) }
     fun delete(ic: InventarioComida) = viewModelScope.launch { dao.delete(ic) }
+
+    private val _counts = MutableStateFlow<Map<Long,Int>>(emptyMap())
+    val comidaCounts: StateFlow<Map<Long,Int>> = _counts
+
+    fun refreshAll(inventarioId: Long) = viewModelScope.launch {
+        val list = dao.countAllByInventario(inventarioId)
+        _counts.value = list.associate { it.itemId to it.count }
+    }
 }
 
 class InventarioTarjetaViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = AppDatabase.getInstance(application).inventarioTarjetaDao()
-    val allItems: LiveData<List<InventarioTarjeta>> = dao.getAll()
-    fun insert(it: InventarioTarjeta) = viewModelScope.launch { dao.insert(it) }
-    fun update(it: InventarioTarjeta) = viewModelScope.launch { dao.update(it) }
-    fun delete(it: InventarioTarjeta) = viewModelScope.launch { dao.delete(it) }
+    val allItems: StateFlow<List<InventarioTarjeta>> = dao
+        .getAll()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+    fun upsert(item: InventarioTarjeta) = viewModelScope.launch {
+        dao.insert(item)
+    }
+
+    fun remove(item: InventarioTarjeta) = viewModelScope.launch {
+        dao.delete(item)
+    }
+    fun insert(inv: InventarioTarjeta) = viewModelScope.launch { dao.insert(inv) }
+    fun update(inv: InventarioTarjeta) = viewModelScope.launch { dao.update(inv) }
+    fun delete(inv: InventarioTarjeta) = viewModelScope.launch { dao.delete(inv) }
+
+    private val _counts = MutableStateFlow<Map<Long,Int>>(emptyMap())
+    val tarjetaCounts: StateFlow<Map<Long,Int>> = _counts
+
+    fun refreshAll(inventarioId: Long) = viewModelScope.launch {
+        val list = dao.countAllByInventario(inventarioId)
+        _counts.value = list.associate { it.itemId to it.count }
+    }
 }
 
 class PartidaViewModel(application: Application) : AndroidViewModel(application) {
@@ -187,6 +292,22 @@ class PartidaJugadorViewModel(application: Application) : AndroidViewModel(appli
     fun insert(pj: PartidaJugador) = viewModelScope.launch { dao.insert(pj) }
     fun update(pj: PartidaJugador) = viewModelScope.launch { dao.update(pj) }
     fun delete(pj: PartidaJugador) = viewModelScope.launch { dao.delete(pj) }
+    fun getAllById(id : Long) : LiveData<List<PartidaJugador>> = dao.getByPartida(id)
+}
+
+class PositionsViewModel(application: Application) : AndroidViewModel(application) {
+    private val db                 = AppDatabase.getInstance(application)
+    private val partidaJugadorDao  = db.partidaJugadorDao()
+
+    /** Debes fijar esta propiedad antes de observar `playersInGame` */
+    private val _partidaId = MutableLiveData<Long>()
+    fun setPartidaId(id: Long) { _partidaId.value = id }
+
+    /** LiveData con solo los jugadores de esa partida */
+    val playersInGame: LiveData<List<Jugador>> =
+        _partidaId.switchMap { pid ->
+            partidaJugadorDao.getJugadoresForPartida(pid)
+        }
 }
 
 class PartidaDiaViewModel(application: Application) : AndroidViewModel(application) {
@@ -252,13 +373,19 @@ class PartidaStartViewModel(application: Application) : AndroidViewModel(applica
             partidaId = partidaDao.insert(Partida(ganador = ""))
 
             // 2) Mes inicial
-            val mesId = mesDao.insert(Mes(numero = 1))
+
+            val existMes : Boolean = mesDao.existsByNumero(1)
+            var mesId = 1L
+
+            if (!existMes){
+                mesId = mesDao.insert(Mes(numero = 1))
+            }
 
             // 3) Por cada jugador, creamos todo lo necesario
             playerNames.forEach { nombre ->
                 // a) Jugador
                 val jugadorId = jugadorDao.insert(
-                    Jugador(nombre = nombre, dinero = 0.0, ingresos = 0.0, gastos = 0.0)
+                    Jugador(nombre = nombre, dinero = 1000.0, ingresos = 0.0, gastos = 0.0)
                 )
                 // Se aplica el id a los datos
                 PartidaDatos.aplicarid(jugadorId)
@@ -268,7 +395,7 @@ class PartidaStartViewModel(application: Application) : AndroidViewModel(applica
                 )
                 // c) Inventario vacío para este jugador
                 val inventarioId = inventarioDao.insert(
-                    Inventario(fkJugador = jugadorId)
+                    Inventario(fkJugador = jugadorId, fkPartida = partidaId)
                 )
 
                 // d) Generar 31 días y relacionarlos con la partida
@@ -326,6 +453,81 @@ class TiendaNegocioViewModel(application: Application) : AndroidViewModel(applic
     }
 }
 
+class InventarioNegocioViewModel(application: Application) : AndroidViewModel(application) {
+    private val db                 = AppDatabase.getInstance(application)
+    private val dao                = db.inventarioNegocioDao()
+    private val jugadorDao = db.jugadorDao()            // 📌
+
+    /** StateFlow con todos los negocios en inventario */
+    val allItems: StateFlow<List<InventarioNegocio>> = dao
+        .getAll()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
+
+    /** Inserta o actualiza un registro */
+    fun upsert(item: InventarioNegocio) = viewModelScope.launch {
+        dao.insert(item)
+    }
+
+    /** Elimina un registro */
+    fun remove(item: InventarioNegocio) = viewModelScope.launch {
+        dao.delete(item)
+    }
+
+
+
+    /** Operaciones básicas */
+    fun insert(inv: InventarioNegocio)   = viewModelScope.launch { dao.insert(inv) }
+    fun update(inv: InventarioNegocio)   = viewModelScope.launch { dao.update(inv) }
+    fun delete(inv: InventarioNegocio)   = viewModelScope.launch { dao.delete(inv) }
+
+    // Exponer un StateFlow parametrizado por inventoryId:
+    fun itemsFor(inventarioId: Long): StateFlow<List<InventarioNegocioWithNegocio>> =
+        dao.getConDetalle(inventarioId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Compra un negocio: si ya está en inventario incrementa cantidad, si no lo inserta */
+    fun comprarNegocio(negocio: Negocio) = viewModelScope.launch {
+        val invId = EstadoTurno.inventarioId
+        // 1) ¿ya existe?
+        val existente = dao.getByInventarioAndNegocio(invId, negocio.id)
+        if (existente != null) {
+            // 2a) actualizar cantidad
+            dao.update(existente.copy(cantidad = existente.cantidad + 1))
+        } else {
+            // 2b) insertar nuevo
+            dao.insert(
+                InventarioNegocio(
+                    fkInventario = invId,
+                    fkNegocio    = negocio.id,
+                    cantidad     = 1
+                )
+            )
+        }
+        dinero = dinero - negocio.costeTienda.toInt()
+        EstadoTurno.updateJugador()
+
+        // 3) Graba el Jugador en BD *con los nuevos valores*
+        jugadorDao.update(EstadoTurno.jugador)
+        TurnoManager.refreshCurrentPlayerInMemory()               // <-- nuevo
+
+    }
+
+    private val _counts = MutableStateFlow<Map<Long,Int>>(emptyMap())
+    val negocioCounts: StateFlow<Map<Long,Int>> = _counts
+
+    /** Recarga el mapa (negocioId -> cantidad) para todo el inventario */
+    fun refreshAll(inventarioId: Long) = viewModelScope.launch {
+        val list = dao.countAllByInventario(inventarioId)
+        _counts.value = list.associate { it.itemId to it.count }
+    }
+
+}
+
+
 /**
  * ViewModel para gestionar la lógica de la tienda del jugador.
  */
@@ -365,14 +567,7 @@ class ShopViewModel(application: Application) : AndroidViewModel(application) {
 
         db.withTransaction {
             val existe = tiendaDao.existeTiendaParaDia(diaId)
-            Log.d("ShopVM", "¿Ya existe tienda para día $diaId? $existe")
-            if (existe) {
-                Log.d("ShopVM", "❌ Omite inserción, ya había tienda")
-                return@withTransaction
-            }
-            Log.d("ShopVM", "✅ No existía, procedo a insertar tienda")
             val newTiendaId = tiendaDao.insert(Tienda(fkJugador = jugadorId, fkDia = diaId))
-            Log.d("ShopVM", "   → Insertada tienda con id $newTiendaId")
             _tiendaId.postValue(newTiendaId)
 
             // 2) Obtener y mezclar negocios por categoría
@@ -386,12 +581,9 @@ class ShopViewModel(application: Application) : AndroidViewModel(application) {
                     val insertedId = tiendaNegocioDao.insert(
                         TiendaNegocio(fkTienda = newTiendaId, fkNegocio = negocio.id)
                     )
-                    Log.d("ShopViewModel", "Inserted TiendaNegocio id=$insertedId for negocio=${negocio.id}")
                 }
             }
         }
-        val total = tiendaDao.countAll()
-        Log.d("ShopVM", "Total de tiendas en DB tras generarTiendaNueva: $total")
     }
 
 }

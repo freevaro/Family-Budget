@@ -108,46 +108,11 @@ fun CalendarScreen(
                 )
             }
 
-            // Navegación del mes
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = Dimensions.heightPercentage(2f)),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(onClick = { /* Mes anterior */ }) {
-                    Icon(
-                        imageVector = Icons.Default.ChevronLeft,
-                        contentDescription = "Mes anterior",
-                        tint = Color.White,
-                        modifier = Modifier.size(Dimensions.widthPercentage(6f))
-                    )
-                }
-
-                Text(
-                    text = "MES 1",
-                    color = Color.White,
-                    fontSize = Dimensions.responsiveSp(20f),
-                    fontWeight = FontWeight.Bold,
-                    fontFamily = fuenteprincipal
-                )
-
-                IconButton(onClick = { /* Mes siguiente */ }) {
-                    Icon(
-                        imageVector = Icons.Default.ChevronRight,
-                        contentDescription = "Mes siguiente",
-                        tint = Color.White,
-                        modifier = Modifier.size(Dimensions.widthPercentage(6f))
-                    )
-                }
-            }
-
             // Días de la semana
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = Dimensions.heightPercentage(1f)),
+                    .padding(bottom = Dimensions.heightPercentage(1f), top = Dimensions.widthPercentage(7f)),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
                 listOf("L", "M", "X", "J", "V", "S", "D").forEach { day ->
@@ -192,7 +157,7 @@ fun CalendarScreen(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = Dimensions.heightPercentage(4.7f)),
+                    .padding(bottom = Dimensions.heightPercentage(4.5f)),
                 colors = CardDefaults.cardColors(
                     containerColor = lightGreen.copy(alpha = 0.7f)
                 ),
@@ -217,6 +182,24 @@ fun CalendarScreen(
                         color = darkGreen,
                         modifier = Modifier.padding(bottom = Dimensions.heightPercentage(1f))
                     )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.AttachMoney,
+                            contentDescription = "Dinero",
+                            tint = darkGreen,
+                            modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                        )
+                        Text(
+                            text = " Dinero: $1000",
+                            fontFamily = fuenteprincipal,
+                            fontSize = Dimensions.responsiveSp(16f),
+                            color = Color.Black
+                        )
+                    }
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),

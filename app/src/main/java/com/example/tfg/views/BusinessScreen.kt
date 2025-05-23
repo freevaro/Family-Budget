@@ -1,6 +1,7 @@
 package com.example.tfg.views
 
 import BottomNavigationBar
+import android.R.attr.onClick
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -60,9 +61,9 @@ fun BusinessScreen(
     val viewModel: NegocioViewModel = viewModel()
     val negocios by viewModel.allNegocios.observeAsState(emptyList())
 
-    // Categorías de filtro (basadas en el campo "categoria" de cada Negocio)
-    val categories = listOf("Todos", "Negocios", "Servicios", "Comercios", "Otros")
-    var selectedCategory by remember { mutableStateOf("Todos") }
+// Estado de selección de categoría y detalle
+    var selectedNegocio by remember { mutableStateOf<Negocio?>(null) }
+
 
     Box(
         modifier = Modifier
@@ -113,18 +114,119 @@ fun BusinessScreen(
                 modifier = Modifier.weight(1f)
             ) {
                 items(
-                    items = negocios.filter { selectedCategory == "Todos" || it.categoria == selectedCategory },
+                    items = negocios,
                     key = { negocio -> negocio.id }
                 ) { negocio ->
                     NegocioCard(
                         negocio = negocio,
                         fuentePrincipal = fuentePrincipal,
                         darkGreen = darkGreen,
-                        lightGreen = lightGreen
+                        lightGreen = lightGreen,
+                        onClick = { selectedNegocio = negocio}
                     )
                 }
             }
         }
+    }
+    // Diálogo con detalles del negocio
+    selectedNegocio?.let { negocio ->
+        AlertDialog(
+            onDismissRequest = { selectedNegocio = null },
+            containerColor = lightGreen.copy(alpha = 0.9f),
+            shape = MaterialTheme.shapes.large,
+            titleContentColor = Color.Black,
+            textContentColor = Color.Black,
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    val icon = iconFromString(negocio.icon)
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(Dimensions.widthPercentage(12f))
+                            .clip(CircleShape)
+                            .background(darkGreen.copy(alpha = 0.7f))
+                    ) {
+                        Icon(
+                            imageVector = icon,
+                            contentDescription = negocio.nombre,
+                            tint = Color.White,
+                            modifier = Modifier.size(Dimensions.widthPercentage(6f))
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(Dimensions.widthPercentage(3f)))
+                    Text(
+                        text = negocio.nombre,
+                        fontFamily = fuentePrincipal,
+                        fontSize = Dimensions.responsiveSp(24f),
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Dimensions.widthPercentage(2f))
+                ) {
+                    DetalleNegocioItem(
+                        icon = Icons.Default.TrendingUp,
+                        texto = "Ingresos diarios:",
+                        valor = "$${negocio.ingresos.toInt()}/día",
+                        fuentePrincipal = fuentePrincipal
+                    )
+
+                    Spacer(modifier = Modifier.height(Dimensions.heightPercentage(2f)))
+
+                    DetalleNegocioItem(
+                        icon = Icons.Default.Store,
+                        texto = "Coste tienda:",
+                        valor = "$${negocio.costeTienda.toInt()}",
+                        fuentePrincipal = fuentePrincipal
+                    )
+
+                    Spacer(modifier = Modifier.height(Dimensions.heightPercentage(2f)))
+
+                    DetalleNegocioItem(
+                        icon = Icons.Default.Build,
+                        texto = "Coste mantenimiento:",
+                        valor = "$${negocio.costeMantenimiento.toInt()}",
+                        fuentePrincipal = fuentePrincipal
+                    )
+
+                    Spacer(modifier = Modifier.height(Dimensions.heightPercentage(2f)))
+
+                    DetalleNegocioItem(
+                        icon = Icons.Default.Category,
+                        texto = "Categoría:",
+                        valor = negocio.categoria,
+                        fuentePrincipal = fuentePrincipal
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = { selectedNegocio = null },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = darkGreen,
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Dimensions.widthPercentage(4f))
+                ) {
+                    Text(
+                        "CERRAR",
+                        fontFamily = fuentePrincipal,
+                        fontSize = Dimensions.responsiveSp(16f),
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
+        )
     }
 }
 
@@ -144,7 +246,8 @@ fun NegocioCard(
     negocio: Negocio,
     fuentePrincipal: FontFamily,
     darkGreen: Color,
-    lightGreen: Color
+    lightGreen: Color,
+    onClick : () -> Unit
 ) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -160,7 +263,7 @@ fun NegocioCard(
                 .size(Dimensions.widthPercentage(20f))
                 .clip(CircleShape)
                 .background(lightGreen.copy(alpha = 0.7f))
-                .clickable { /* Lógica para ver detalles */ }
+                .clickable { onClick() }
         ) {
             Icon(
                 imageVector = icon,
@@ -202,69 +305,47 @@ fun NegocioCard(
  * @return [ImageVector] correspondiente al nombre. Si no coincide, devuelve `Icons.Default.Storefront`.
  */
 
-// Función para mapear el nombre del icono guardado en la base de datos a un ImageVector
-fun iconFromString(name: String): ImageVector = when (name) {
-    "LocalCafe" -> Icons.Default.LocalCafe
-    "Restaurant" -> Icons.Default.Restaurant
-    "Store" -> Icons.Default.Store
-    "FitnessCenter" -> Icons.Default.FitnessCenter
-    "MenuBook" -> Icons.Default.MenuBook
-    "LocalPharmacy" -> Icons.Default.LocalPharmacy
-    "LocalMovies" -> Icons.Default.LocalMovies
-    "Hotel" -> Icons.Default.Hotel
-    "ContentCut" -> Icons.Default.ContentCut
-    "ShoppingCart" -> Icons.Default.ShoppingCart
-    "Build" -> Icons.Default.Build
-    "Cake" -> Icons.Default.Cake
-    "LocalDrink" -> Icons.Default.LocalDrink
-    "Newspaper" -> Icons.Default.Newspaper
-    "Icecream" -> Icons.Default.Icecream
-    "PhoneIphone" -> Icons.Default.PhoneIphone
-    "LocalCarWash" -> Icons.Default.LocalCarWash
-    "Fastfood" -> Icons.Default.Fastfood
-    "LocalGroceryStore" -> Icons.Default.LocalGroceryStore
-    "CardGiftcard" -> Icons.Default.CardGiftcard
-    "PedalBike" -> Icons.Default.PedalBike
-    "Checkroom" -> Icons.Default.Checkroom
-    "PhotoCamera" -> Icons.Default.PhotoCamera
-    "Pets" -> Icons.Default.Pets
-    "LocalPostOffice" -> Icons.Default.LocalPostOffice
-    "WbSunny" -> Icons.Default.WbSunny
-    "Toys" -> Icons.Default.Toys
-    "RollerSkating" -> Icons.Default.RollerSkating
-    "Coffee" -> Icons.Default.Coffee
-    "Computer" -> Icons.Default.Computer
-    "Draw" -> Icons.Default.Draw
-    "ChildCare" -> Icons.Default.ChildCare
-    "TravelExplore" -> Icons.Default.TravelExplore
-    "Storefront" -> Icons.Default.Storefront
-    "Language" -> Icons.Default.Language
-    "CarRepair" -> Icons.Default.CarRepair
-    "BikeScooter" -> Icons.Default.BikeScooter
-    "DesignServices" -> Icons.Default.DesignServices
-    "BakeryDining" -> Icons.Default.BakeryDining
-    "Spa" -> Icons.Default.Spa
-    "Book" -> Icons.Default.Book
-    "ShoppingBasket" -> Icons.Default.ShoppingBasket
-    "FoodBank" -> Icons.Default.FoodBank
-    "Shop" -> Icons.Default.Shop
-    "Workspaces" -> Icons.Default.Workspaces
-    "RestaurantMenu" -> Icons.Default.RestaurantMenu
-    "FaceRetouchingNatural" -> Icons.Default.FaceRetouchingNatural
-    "Code" -> Icons.Default.Code
-    "PrecisionManufacturing" -> Icons.Default.PrecisionManufacturing
-    "Movie" -> Icons.Default.Movie
-    "RocketLaunch" -> Icons.Default.RocketLaunch
-    "OndemandVideo" -> Icons.Default.OndemandVideo
-    "Recycling" -> Icons.Default.Recycling
-    "SmartToy" -> Icons.Default.SmartToy
-    "Sailing" -> Icons.Default.Sailing
-    "VideogameAsset" -> Icons.Default.VideogameAsset
-    "Science" -> Icons.Default.Science
-    "LocalHospital" -> Icons.Default.LocalHospital
-    "ElectricCar" -> Icons.Default.ElectricCar
-    "Tv" -> Icons.Default.Tv
-    "SatelliteAlt" -> Icons.Default.SatelliteAlt
-    "ShoppingBag" -> Icons.Default.ShoppingBag
-    else -> Icons.Default.Storefront
+
+
+/**
+ * Composable que muestra un ítem de detalle para el modal de negocio.
+ *
+ * @param icon Icono a mostrar junto al texto.
+ * @param texto Etiqueta del detalle.
+ * @param valor Valor del detalle.
+ * @param fuentePrincipal Fuente a utilizar.
+ */
+@Composable
+fun DetalleNegocioItem(
+    icon: ImageVector,
+    texto: String,
+    valor: String,
+    fuentePrincipal: FontFamily
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color.Black,
+            modifier = Modifier.size(Dimensions.widthPercentage(6f))
+        )
+        Spacer(modifier = Modifier.width(Dimensions.widthPercentage(2f)))
+        Text(
+            text = texto,
+            fontFamily = fuentePrincipal,
+            fontSize = Dimensions.responsiveSp(16f),
+            color = Color.Black,
+            modifier = Modifier.weight(1f)
+        )
+        Text(
+            text = valor,
+            fontFamily = fuentePrincipal,
+            fontSize = Dimensions.responsiveSp(18f),
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+    }
 }

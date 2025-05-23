@@ -1,6 +1,7 @@
 package com.example.tfg.views
 
 import android.annotation.SuppressLint
+import androidx.activity.ComponentActivity
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
@@ -36,7 +37,10 @@ import com.example.tfg.AppDatabase
 import com.example.tfg.R
 import com.example.tfg.viewmodel.PartidaDatos.partidaId
 import com.example.tfg.viewmodel.PartidaStartViewModel
+import com.example.tfg.viewmodel.ShopViewModel
 import com.example.tfg.viewmodel.TurnoManager
+import com.example.tfg.viewmodel.TurnoManager.diaId
+import com.example.tfg.viewmodel.TurnoManager.playerId
 import com.example.tfg.views.NumJugadores.playersCount
 import kotlin.random.Random
 
@@ -323,6 +327,8 @@ fun MainScreen(
                         // Botón JUGAR dentro del diálogo
                         val partidaVM: PartidaStartViewModel = viewModel()
                         val allNamesFilled = playerNames.take(playersCount).all { it.isNotBlank() }
+                        val shopVM: ShopViewModel = viewModel()
+
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))

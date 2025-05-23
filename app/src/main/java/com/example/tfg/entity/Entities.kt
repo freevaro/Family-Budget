@@ -104,18 +104,20 @@ data class Tienda(
 )
 
 /**
- * Inventario asociado a un único jugador.
+ * Inventario asociado a un único jugador y partida.
  */
 @Entity(
     tableName = "inventario",
     foreignKeys = [
-        ForeignKey(Jugador::class, parentColumns = ["id"], childColumns = ["fk_jugador"], onDelete = ForeignKey.CASCADE)
+        ForeignKey(Jugador::class, parentColumns = ["id"], childColumns = ["fk_jugador"], onDelete = CASCADE),
+        ForeignKey(Partida::class, parentColumns = ["id"], childColumns = ["fk_partida"], onDelete = CASCADE)
     ],
-    indices = [Index("fk_jugador")]
+    indices = [Index("fk_jugador"), Index("fk_partida")]
 )
 data class Inventario(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
-    @ColumnInfo(name = "fk_jugador") val fkJugador: Long
+    @ColumnInfo(name = "fk_jugador") val fkJugador: Long,
+    @ColumnInfo(name = "fk_partida") val fkPartida: Long
 )
 
 @Entity(

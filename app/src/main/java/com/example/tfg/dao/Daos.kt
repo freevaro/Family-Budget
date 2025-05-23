@@ -4,6 +4,8 @@ import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.tfg.entity.*
 import androidx.room.withTransaction
+import com.example.tfg.views.ItemCount
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface MesDao {
@@ -11,6 +13,8 @@ interface MesDao {
     @Insert suspend fun insert(m: Mes) : Long
     @Update suspend fun update(m: Mes)
     @Delete suspend fun delete(m: Mes)
+    @Query("SELECT EXISTS(SELECT 1 FROM mes WHERE numero = :numero)")
+    suspend fun existsByNumero(numero: Int): Boolean
 }
 
 @Dao
@@ -34,6 +38,21 @@ interface DiaDao {
         jugadorId: Long,
         mesId: Long
     ): Dia
+
+    /**
+     * Obtiene la lista de días de un jugador para un mes determinado, ordenados por número de día.
+     * @param jugadorId ID del jugador.
+     * @param mesId ID del mes.
+     */
+    @Query("""
+        SELECT *
+        FROM dia
+        WHERE fk_jugador = :jugadorId
+          AND fk_mes = :mesId
+        ORDER BY numero_dia
+    """ )
+    suspend fun getDiasByJugadorAndMes(jugadorId: Long, mesId: Long): List<Dia>
+
 }
 
 @Dao
@@ -79,7 +98,11 @@ interface NegocioDao {
     @Delete suspend fun delete(n: Negocio)
     @Query("SELECT * FROM negocio WHERE categoria = :categoria")
     suspend fun getByCategoria(categoria: String): List<Negocio>
+    @Query("SELECT * FROM negocio WHERE id = :id")
+    suspend fun getById(id: Long): Negocio?
 }
+
+
 
 @Dao
 interface TiendaDao {
@@ -112,23 +135,75 @@ interface InventarioDao {
        LIMIT 1
     """)
     suspend fun getByPlayerSync(jugadorId: Long): Inventario
+
+    /**
+     * Obtiene el inventario principal de un jugador.
+     * @param jugadorId ID del jugador.
+     */
+    @Query("""
+        SELECT *
+        FROM inventario
+        WHERE fk_partida = :partidaId
+    """ )
+    suspend fun getInventarioByJugador(partidaId: Long): List<Inventario>
 }
 
 @Dao
 interface InventarioComidaDao {
-    @Query("SELECT * FROM inventario_comida") fun getAll(): LiveData<List<InventarioComida>>
+    @Query("SELECT id, fk_inventario, fk_comida, duracion FROM inventario_comida")
+    fun getAll(): Flow<List<InventarioComida>>
     @Insert suspend fun insert(ic: InventarioComida)
     @Update suspend fun update(ic: InventarioComida)
     @Delete suspend fun delete(ic: InventarioComida)
+    @Query("""
+    SELECT fk_comida AS itemId, COUNT(*) AS count
+      FROM inventario_comida
+     WHERE fk_inventario = :inventarioId
+     GROUP BY fk_comida
+  """)
+    suspend fun countAllByInventario(inventarioId: Long): List<ItemCount>
+
 }
 
 @Dao
 interface InventarioTarjetaDao {
-    @Query("SELECT * FROM inventario_tarjeta") fun getAll(): LiveData<List<InventarioTarjeta>>
-    @Insert suspend fun insert(it: InventarioTarjeta)
-    @Update suspend fun update(it: InventarioTarjeta)
-    @Delete suspend fun delete(it: InventarioTarjeta)
+    /** Inserta o reemplaza un registro y devuelve su ID */
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insert(inventarioTarjeta: InventarioTarjeta): Long
+
+    /** Actualiza un registro existente */
+    @Update
+    suspend fun update(inventarioTarjeta: InventarioTarjeta)
+
+    /** Borra un registro concreto */
+    @Delete
+    suspend fun delete(inventarioTarjeta: InventarioTarjeta)
+
+    /** Obtiene todos los negocios de un inventario específico como LiveData */
+    @Query("SELECT * FROM inventario_tarjeta WHERE fk_inventario = :inventarioId")
+    fun getByInventario(inventarioId: Long): LiveData<List<InventarioTarjeta>>
+
+    @Query("SELECT id, fk_inventario, fk_tarjeta, duracion FROM inventario_tarjeta")
+    fun getAll(): Flow<List<InventarioTarjeta>>
+
+    @Query("""
+    SELECT fk_tarjeta AS itemId, COUNT(*) AS count
+      FROM inventario_tarjeta
+     WHERE fk_inventario = :inventarioId
+     GROUP BY fk_tarjeta
+  """)
+    suspend fun countAllByInventario(inventarioId: Long): List<ItemCount>
 }
+
+data class InventarioNegocioWithNegocio(
+    @Embedded val invNegocio: InventarioNegocio,
+    @Relation(
+        parentColumn = "fk_negocio",
+        entityColumn = "id"
+    )
+    val negocio: Negocio
+)
+
 
 @Dao
 interface InventarioNegocioDao {
@@ -149,9 +224,44 @@ interface InventarioNegocioDao {
     @Query("SELECT * FROM inventario_negocio WHERE fk_inventario = :inventarioId")
     suspend fun getByInventario(inventarioId: Long): List<InventarioNegocio>
 
-    /** Obtiene todos los registros de negocio de todos los inventarios. */
-    @Query("SELECT * FROM inventario_negocio")
-    suspend fun getAll(): List<InventarioNegocio>
+    /** Flujo de todos los registros de inventario_negocio */
+    @Query("SELECT id, fk_inventario, fk_negocio, cantidad FROM inventario_negocio")
+    fun getAll(): Flow<List<InventarioNegocio>>
+
+    // JOIN entre inventario_negocio y negocio:
+    @Transaction
+    @Query("SELECT * FROM inventario_negocio WHERE fk_inventario = :inventarioId")
+    fun getConDetalle(inventarioId: Long): Flow<List<InventarioNegocioWithNegocio>>
+
+
+    @Query("SELECT * FROM inventario_negocio WHERE fk_inventario = :inventarioId")
+    fun getNegociosForInventario(inventarioId: Long): Flow<List<InventarioNegocio>>
+
+    /** Devuelve la fila si ya existe esa relación inventario–negocio */
+    @Query("""
+    SELECT * 
+      FROM inventario_negocio 
+     WHERE fk_inventario = :inventarioId 
+       AND fk_negocio    = :negocioId
+     LIMIT 1
+  """)
+    suspend fun getByInventarioAndNegocio(
+        inventarioId: Long,
+        negocioId: Long
+    ): InventarioNegocio?
+
+    /**
+     * Devuelve un mapa negocioId → cantidad de filas en ese inventario
+     * (cada fila representa 1 unidad)
+     */
+    @Query("""
+    SELECT fk_negocio AS itemId, COUNT(*) AS count
+      FROM inventario_negocio
+     WHERE fk_inventario = :inventarioId
+     GROUP BY fk_negocio
+  """)
+    suspend fun countAllByInventario(inventarioId: Long): List<ItemCount>
+
 }
 
 @Dao
@@ -168,6 +278,19 @@ interface PartidaJugadorDao {
     @Insert suspend fun insert(pj: PartidaJugador)
     @Update suspend fun update(pj: PartidaJugador)
     @Delete suspend fun delete(pj: PartidaJugador)
+    /**
+     * Recupera todas las filas de partida_jugador para la partida indicada.
+     */
+    @Query("SELECT * FROM partida_jugador WHERE fk_partida = :partidaId")
+    fun getByPartida(partidaId: Long): LiveData<List<PartidaJugador>>
+    /** Recupera directamente las entidades Jugador que están en la partida indicada */
+    @Query("""
+    SELECT j.* 
+      FROM jugador j
+      JOIN partida_jugador pj ON j.id = pj.fk_jugador
+     WHERE pj.fk_partida = :partidaId
+  """)
+    fun getJugadoresForPartida(partidaId: Long): LiveData<List<Jugador>>
 }
 
 @Dao

@@ -10,9 +10,9 @@ import kotlinx.coroutines.withContext
  */
 suspend fun prepopulateTarjetas(tarjetaDao: TarjetaDao) = withContext(Dispatchers.IO) {
     val tarjetas = listOf(
-        Tarjeta(nombre = "Tarjeta Negocio", nombreEfecto = "", tipoEfecto = "", dirigidoA = "", tipoTarjeta = "", queHace = "", queModifica = "", efectoValor = 5000),
-        Tarjeta(nombre = "Tarjeta Dinero", nombreEfecto = "", tipoEfecto = "", dirigidoA = "", tipoTarjeta = "", queHace = "", queModifica = "", efectoValor = 5000),
-        Tarjeta(nombre = "Tarjeta Aleatoria", nombreEfecto = "", tipoEfecto = "", dirigidoA = "", tipoTarjeta = "", queHace = "", queModifica = "", efectoValor = 5000),
+        Tarjeta(nombre = "Tarjeta Negocio", nombreEfecto = "Esta tarjeta te aplicará un efecto aleatorio relacionado con tus negocios. ¡Prueba Suerte!", tipoEfecto = "", dirigidoA = "", tipoTarjeta = "", queHace = "", queModifica = "", efectoValor = 5000),
+        Tarjeta(nombre = "Tarjeta Dinero", nombreEfecto = "Esta tarjeta te aplicará un efecto aleatorio relacionado con tu dinero. ¡Prueba Suerte!", tipoEfecto = "", dirigidoA = "", tipoTarjeta = "", queHace = "", queModifica = "", efectoValor = 5000),
+        Tarjeta(nombre = "Tarjeta Aleatoria", nombreEfecto = "Esta tarjeta te aplicará un efecto aleatorio. ¡Prueba Suerte!", tipoEfecto = "", dirigidoA = "", tipoTarjeta = "", queHace = "", queModifica = "", efectoValor = 5000),
         Tarjeta(nombre = "Campaña Viral", nombreEfecto = "Impulso de Ingresos", tipoEfecto = "Positivo", dirigidoA = "Propio", tipoTarjeta = "negocio", queHace = "ingresos", queModifica = "ingresos", efectoValor = 30),
         Tarjeta(nombre = "Expansión Internacional", nombreEfecto = "Expansión de Mercado", tipoEfecto = "Positivo", dirigidoA = "Propio", tipoTarjeta = "negocio", queHace = "ingresos", queModifica = "ingresos", efectoValor = 100),
         Tarjeta(nombre = "Mejora de Producto", nombreEfecto = "Mejora de Ventas", tipoEfecto = "Positivo", dirigidoA = "Propio", tipoTarjeta = "negocio", queHace = "ingresos", queModifica = "ingresos", efectoValor = 20),

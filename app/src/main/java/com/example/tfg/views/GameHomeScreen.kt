@@ -1,5 +1,6 @@
 package com.example.tfg.views
 
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -32,10 +33,13 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,8 +56,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.tfg.R
 import com.example.tfg.viewmodel.EstadoTurno
+import com.example.tfg.viewmodel.EstadoTurno.diaId
+import com.example.tfg.viewmodel.EstadoTurno.idJugador
 import com.example.tfg.viewmodel.JugadorViewModel
+import com.example.tfg.viewmodel.PartidaDatos.partidaId
+import com.example.tfg.viewmodel.PartidaJugadorViewModel
+import com.example.tfg.viewmodel.PositionsViewModel
+import com.example.tfg.viewmodel.ShopViewModel
 import com.example.tfg.viewmodel.TurnoManager
+import com.example.tfg.viewmodel.TurnoManager.playerId
 
 /**
  * Pantalla principal del juego donde se muestra la información del jugador actual,
@@ -88,13 +99,7 @@ fun GameHomeScreen(
     onNavigateToSettings: () -> Unit = {},
     navController: NavHostController,
     musicEnabled: Boolean,
-    onMusicToggle: (Boolean)-> Unit,
-    players: List<Player> = listOf(
-        Player("David", 600, 1),
-        Player("Ana", 550, 2),
-        Player("Carlos", 500, 3),
-        Player("Elena", 450, 4)
-    )
+    onMusicToggle: (Boolean)-> Unit
 ) {
     val showDialog = remember { mutableStateOf(false) }
     val primaryGreen = Color(0xFF9CCD5C)
@@ -105,34 +110,48 @@ fun GameHomeScreen(
         Font(R.font.barriecito_regular)
     )
     val jugadoresViewModel : JugadorViewModel = viewModel()
-    val jugadores by jugadoresViewModel.allJugadores.observeAsState(emptyList())
+    val jugadoresPPViewModel : PartidaJugadorViewModel = viewModel()
+    val viewModel: PositionsViewModel = viewModel()
+    val jugadores by viewModel.playersInGame.observeAsState(emptyList())
+
+    val shopVM: ShopViewModel = viewModel()
+
+    LaunchedEffect(partidaId) {
+        viewModel.setPartidaId(partidaId)
+    }
 
     val players = remember(jugadores) {
         jugadores
             .sortedByDescending { it.dinero }
-            .mapIndexed { index, jugador ->
+            .mapIndexed { idx, jug ->
                 Player(
-                    name = jugador.nombre,
-                    money = jugador.dinero.toInt(),
-                    position = index + 1
+                    name     = jug.nombre,
+                    money    = jug.dinero.toInt(),
+                    position = idx + 1
                 )
             }
     }
-    val diaNum by remember {
-        derivedStateOf { EstadoTurno.diaNum }
+    val diaNum by produceState(initialValue = 0) {
+        snapshotFlow { EstadoTurno.diaNum }
+            .collect { value = it }
     }
-    val turnoName by remember {
-        derivedStateOf { EstadoTurno.nombre }
+    val turnoName by produceState(initialValue = "") {
+        snapshotFlow { EstadoTurno.nombre }
+            .collect { value = it }
     }
-    val efectivo by remember {
-        derivedStateOf { EstadoTurno.dinero }
+    val efectivo by produceState(initialValue = 0) {
+        snapshotFlow { EstadoTurno.dinero }
+            .collect { value = it }
     }
-    val ingresos by remember {
-        derivedStateOf { EstadoTurno.ingresos }
+    val ingresos by produceState(initialValue = 0) {
+        snapshotFlow { EstadoTurno.ingresos }
+            .collect { value = it }
     }
-    val gastos by remember {
-        derivedStateOf { EstadoTurno.costes }
+    val gastos by produceState(initialValue = 0) {
+        snapshotFlow { EstadoTurno.costes }
+            .collect { value = it }
     }
+
 
 
 
@@ -253,8 +272,16 @@ fun GameHomeScreen(
                 }
             }
 
+            val activity = LocalContext.current as ComponentActivity
+            val shopVM: ShopViewModel = viewModel(
+                viewModelStoreOwner = activity
+            )
+
+
             Button(
-                onClick = { TurnoManager.next() },
+                onClick = { TurnoManager.next()
+                    shopVM.generarTiendaNueva(idJugador, diaId)
+                },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(Dimensions.heightPercentage(9f))
