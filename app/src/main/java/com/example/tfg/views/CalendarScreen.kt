@@ -198,11 +198,13 @@ fun CalendarScreen(
                             text = "Día $selectedDay  –  Turno ${TurnoManager.turno}",
                             fontFamily  = fuenteprincipal,
                             fontSize    = 18.sp,
+                            color = Color(0xFF4f7123),
                             fontWeight  = FontWeight.Bold
                         )
                         Text(
                             text = "El día actual no ha acabado y todavía no se ha generado un resumen.",
                             fontFamily = fuenteprincipal,
+                            color = Color.Black,
                             fontSize   = 20.sp
                         )
                     }
@@ -226,11 +228,13 @@ fun CalendarScreen(
                             text = "Día $selectedDay  –  Turno X",
                             fontFamily  = fuenteprincipal,
                             fontSize    = 18.sp,
-                            fontWeight  = FontWeight.Bold
+                            fontWeight  = FontWeight.Bold,
+                            color = Color(0xFF4f7123)
                         )
                         Text(
                             text = "El día seleccionado no ha ocurrido y todavía no se ha generado un resumen.",
                             fontFamily = fuenteprincipal,
+                            color = Color.Black,
                             fontSize   = 20.sp
                         )
                     }
@@ -240,7 +244,7 @@ fun CalendarScreen(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = Dimensions.heightPercentage(4.5f)),
+                        .padding(bottom = Dimensions.heightPercentage(3f)),
                     colors = CardDefaults.cardColors(
                         containerColor = lightGreen.copy(alpha = 0.7f)
                     ),
@@ -254,15 +258,15 @@ fun CalendarScreen(
                             fontFamily = fuenteprincipal,
                             fontSize = Dimensions.responsiveSp(20f),
                             fontWeight = FontWeight.Bold,
-                            color = darkGreen,
-                            modifier = Modifier.padding(bottom = Dimensions.heightPercentage(2f))
+                            color = Color(0xFF4f7123),
+                            modifier = Modifier.padding(bottom = Dimensions.heightPercentage(1f))
                         )
 
                         Text(
                             text = "Resumen Actual:",
                             fontFamily = fuenteprincipal,
                             fontSize = Dimensions.responsiveSp(18f),
-                            color = darkGreen,
+                            color = Color(0xFF4f7123),
                             modifier = Modifier.padding(bottom = Dimensions.heightPercentage(1f))
                         )
 
@@ -273,7 +277,7 @@ fun CalendarScreen(
                             Icon(
                                 imageVector = Icons.Default.AttachMoney,
                                 contentDescription = "Dinero",
-                                tint = darkGreen,
+                                tint = Color(0xFF4f7123),
                                 modifier = Modifier.size(Dimensions.widthPercentage(5f))
                             )
                             Text(
@@ -291,7 +295,7 @@ fun CalendarScreen(
                             Icon(
                                 imageVector = Icons.Default.Business,
                                 contentDescription = "Negocios",
-                                tint = darkGreen,
+                                tint = Color(0xFF4f7123),
                                 modifier = Modifier.size(Dimensions.widthPercentage(5f))
                             )
                             Text(
@@ -309,7 +313,7 @@ fun CalendarScreen(
                             Icon(
                                 imageVector = Icons.Default.TrendingUp,
                                 contentDescription = "Ingresos",
-                                tint = darkGreen,
+                                tint = Color(0xFF4f7123),
                                 modifier = Modifier.size(Dimensions.widthPercentage(5f))
                             )
                             Text(
@@ -388,10 +392,10 @@ fun CalendarDay(
     ) {
         Text(
             text = day.toString(),
-            fontSize = 20.sp,            // número más grande
+            fontSize = 18.sp,            // número más grande
             fontWeight = if (isCurrentDay) FontWeight.Bold else FontWeight.Medium,
             fontFamily = fuenteprincipal,
-            color = if (isCurrentDay) Color.White else Color(0xFF000000)
+            color = if (isCurrentDay) Color.White else Color(0xFF354B18)
         )
     }
 }

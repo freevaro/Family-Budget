@@ -10,7 +10,9 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.*
 import androidx.room.withTransaction
 import com.example.tfg.AppDatabase
+import com.example.tfg.dao.InventarioComidaWithComida
 import com.example.tfg.dao.InventarioNegocioWithNegocio
+import com.example.tfg.dao.InventarioTarjetaWithTarjeta
 import com.example.tfg.entity.*
 import com.example.tfg.viewmodel.EstadoTurno.dinero
 import com.example.tfg.viewmodel.EstadoTurno.idJugador
@@ -221,7 +223,42 @@ class InventarioViewModel(application: Application) : AndroidViewModel(applicati
 }
 
 class InventarioComidaViewModel(application: Application) : AndroidViewModel(application) {
-    private val dao = AppDatabase.getInstance(application).inventarioComidaDao()
+    private val db = AppDatabase.getInstance(application)
+    private val dao = db.inventarioComidaDao()                  // :contentReference[oaicite:0]{index=0}
+    private val jugadorDao = db.jugadorDao()                 // nuevo
+
+    /** Compra una unidad de comida, añade duración y descuenta precio */
+    fun comprarComida(comida: Comida) = viewModelScope.launch {
+        val invId = EstadoTurno.inventarioId                   // importe de EstadoTurno
+        // 1) ¿ya existe?
+        val existente = dao.getByInventarioAndComida(invId, comida.id)
+        if (existente != null) {
+            // 2a) actualizar cantidad
+            dao.update(existente.copy(cantidad = existente.cantidad + 1))
+        } else {
+            // 2b) insertar nuevo
+            dao.insert(
+                InventarioComida(
+                    fkInventario = invId,
+                    fkComida = comida.id,
+                    duracion = comida.duracion,
+                    cantidad = 1,
+                )
+            )
+        }
+        // Restar dinero y actualizar jugador
+        dinero = dinero - comida.precio                         // EstadoTurno.dinero
+        EstadoTurno.updateJugador()
+        jugadorDao.update(EstadoTurno.jugador)
+
+        // Refrescar jugador en memoria
+        TurnoManager.refreshCurrentPlayerInMemory()
+    }
+
+    // Exponer un StateFlow parametrizado por inventoryId:
+    fun itemsFor(inventarioId: Long): StateFlow<List<InventarioComidaWithComida>> =
+        dao.getConDetalle(inventarioId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     val allItems: StateFlow<List<InventarioComida>> = dao
         .getAll()
@@ -252,7 +289,43 @@ class InventarioComidaViewModel(application: Application) : AndroidViewModel(app
 }
 
 class InventarioTarjetaViewModel(application: Application) : AndroidViewModel(application) {
-    private val dao = AppDatabase.getInstance(application).inventarioTarjetaDao()
+    private val db = AppDatabase.getInstance(application)
+    private val dao = db.inventarioTarjetaDao()                // :contentReference[oaicite:1]{index=1}
+    private val jugadorDao = db.jugadorDao()                // nuevo
+
+
+
+
+    // Exponer un StateFlow parametrizado por inventoryId:
+    fun itemsFor(inventarioId: Long): StateFlow<List<InventarioTarjetaWithTarjeta>> =
+        dao.getConDetalle(inventarioId)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    /** Compra una tarjeta, la añade y descuenta su precio */
+    fun comprarTarjeta(tarjeta: Tarjeta) = viewModelScope.launch {
+        val invId = EstadoTurno.inventarioId
+        // 1) ¿ya existe?
+        val existente = dao.getByInventarioAndTarjeta(invId, tarjeta.id)
+        if (existente != null) {
+            // 2a) actualizar cantidad
+            dao.update(existente.copy(cantidad = existente.cantidad + 1))
+        } else {
+            // 2b) insertar nuevo
+            dao.insert(
+                InventarioTarjeta(
+                    fkInventario = invId,
+                    fkTarjeta = tarjeta.id,
+                    cantidad = 1,
+                )
+            )
+        }
+        // Restar dinero según el precio mostrado (efectoValor)
+        dinero = dinero - tarjeta.efectoValor
+        EstadoTurno.updateJugador()
+        jugadorDao.update(EstadoTurno.jugador)
+
+        TurnoManager.refreshCurrentPlayerInMemory()
+    }
     val allItems: StateFlow<List<InventarioTarjeta>> = dao
         .getAll()
         .stateIn(
@@ -388,7 +461,7 @@ class PartidaStartViewModel(application: Application) : AndroidViewModel(applica
             playerNames.forEach { nombre ->
                 // a) Jugador
                 val jugadorId = jugadorDao.insert(
-                    Jugador(nombre = nombre, dinero = 1000.0, ingresos = 0.0, gastos = 0.0)
+                    Jugador(nombre = nombre, dinero = 999999.0, ingresos = 0.0, gastos = 0.0)
                 )
                 // Se aplica el id a los datos
                 PartidaDatos.aplicarid(jugadorId)
@@ -542,7 +615,7 @@ class ResumenDiaViewModel(application: Application) : AndroidViewModel(applicati
         if (resumen.isInitialized){
             Resumen.id = resumen.value?.id!!
             Resumen.fk_jugador = resumen.value?.fkJugador!!
-            Resumen.numDia = resumen.value?.numDia!!
+            numDia = resumen.value?.numDia!!
             Resumen.dinero = resumen.value?.dinero!!.toInt()
             Resumen.negocios = resumen.value?.negocios!!
             Resumen.ingresos = resumen.value?.ingresos!!.toInt()
@@ -551,7 +624,7 @@ class ResumenDiaViewModel(application: Application) : AndroidViewModel(applicati
         }else{
             Resumen.id = 0
             Resumen.fk_jugador = 0
-            Resumen.numDia = 0
+            numDia = 0
             Resumen.dinero = 0
             Resumen.negocios = 0
             Resumen.ingresos = 0
@@ -582,8 +655,8 @@ class ResumenDiaViewModel(application: Application) : AndroidViewModel(applicati
     /** Guarda o actualiza el resumen del turno actual (día + jugador) */
     fun saveResumenTurnoActual() = viewModelScope.launch {
         val diaId      = EstadoTurno.diaNum
-        val jugadorId  = EstadoTurno.idJugador
-        val dinero     = EstadoTurno.dinero.toDouble()
+        val jugadorId  = idJugador
+        val dinero     = dinero.toDouble()
         val ingresos   = EstadoTurno.ingresos.toDouble()
         val gastos     = EstadoTurno.costes.toDouble()
         val inventarioId = EstadoTurno.inventarioId

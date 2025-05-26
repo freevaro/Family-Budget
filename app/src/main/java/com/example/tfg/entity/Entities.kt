@@ -172,7 +172,8 @@ data class InventarioComida(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     @ColumnInfo(name = "fk_inventario") val fkInventario: Long,
     @ColumnInfo(name = "fk_comida") val fkComida: Long,
-    @ColumnInfo(name = "duracion") val duracion: Int
+    @ColumnInfo(name = "duracion") val duracion: Int,
+    @ColumnInfo(name = "cantidad") val cantidad : Int
 )
 
 /**
@@ -190,7 +191,7 @@ data class InventarioTarjeta(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     @ColumnInfo(name = "fk_inventario") val fkInventario: Long,
     @ColumnInfo(name = "fk_tarjeta") val fkTarjeta: Long,
-    @ColumnInfo(name = "duracion") val duracion: Int
+    val cantidad : Int
 )
 
 /**

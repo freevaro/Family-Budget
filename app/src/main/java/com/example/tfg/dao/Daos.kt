@@ -149,7 +149,7 @@ interface InventarioDao {
 
 @Dao
 interface InventarioComidaDao {
-    @Query("SELECT id, fk_inventario, fk_comida, duracion FROM inventario_comida")
+    @Query("SELECT id, fk_inventario, fk_comida, duracion, cantidad FROM inventario_comida")
     fun getAll(): Flow<List<InventarioComida>>
     @Insert suspend fun insert(ic: InventarioComida)
     @Update suspend fun update(ic: InventarioComida)
@@ -161,6 +161,29 @@ interface InventarioComidaDao {
      GROUP BY fk_comida
   """)
     suspend fun countAllByInventario(inventarioId: Long): List<ItemCount>
+
+
+
+    // JOIN entre inventario_negocio y negocio:
+    @Transaction
+    @Query("SELECT * FROM inventario_comida WHERE fk_inventario = :inventarioId")
+    fun getConDetalle(inventarioId: Long): Flow<List<InventarioComidaWithComida>>
+
+    @Query("SELECT cantidad FROM inventario_comida WHERE fk_comida = :fk_comida")
+    suspend fun selectCantidad(fk_comida : Long)  : Int
+
+    /** Devuelve la fila si ya existe esa relación inventario–negocio */
+    @Query("""
+    SELECT * 
+      FROM inventario_comida
+     WHERE fk_inventario = :inventarioId 
+       AND fk_comida    = :fk_comida
+     LIMIT 1
+  """)
+    suspend fun getByInventarioAndComida(
+        inventarioId: Long,
+        fk_comida: Long
+    ): InventarioComida?
 
 }
 
@@ -182,7 +205,7 @@ interface InventarioTarjetaDao {
     @Query("SELECT * FROM inventario_tarjeta WHERE fk_inventario = :inventarioId")
     fun getByInventario(inventarioId: Long): LiveData<List<InventarioTarjeta>>
 
-    @Query("SELECT id, fk_inventario, fk_tarjeta, duracion FROM inventario_tarjeta")
+    @Query("SELECT id, fk_inventario, fk_tarjeta, cantidad FROM inventario_tarjeta")
     fun getAll(): Flow<List<InventarioTarjeta>>
 
     @Query("""
@@ -192,6 +215,27 @@ interface InventarioTarjetaDao {
      GROUP BY fk_tarjeta
   """)
     suspend fun countAllByInventario(inventarioId: Long): List<ItemCount>
+
+    // JOIN entre inventario_negocio y negocio:
+    @Transaction
+    @Query("SELECT * FROM inventario_tarjeta WHERE fk_inventario = :inventarioId")
+    fun getConDetalle(inventarioId: Long): Flow<List<InventarioTarjetaWithTarjeta>>
+
+    @Query("SELECT cantidad FROM inventario_tarjeta WHERE fk_tarjeta = :fk_tarjeta")
+    suspend fun selectCantidad(fk_tarjeta : Long) : Int
+
+    /** Devuelve la fila si ya existe esa relación inventario–negocio */
+    @Query("""
+    SELECT * 
+      FROM inventario_tarjeta
+     WHERE fk_inventario = :inventarioId 
+       AND fk_tarjeta    = :fk_tarjeta
+     LIMIT 1
+  """)
+    suspend fun getByInventarioAndTarjeta(
+        inventarioId: Long,
+        fk_tarjeta: Long
+    ): InventarioTarjeta?
 }
 
 data class InventarioNegocioWithNegocio(
@@ -201,6 +245,24 @@ data class InventarioNegocioWithNegocio(
         entityColumn = "id"
     )
     val negocio: Negocio
+)
+
+data class InventarioComidaWithComida(
+    @Embedded val invComida: InventarioComida,
+    @Relation(
+        parentColumn = "fk_comida",
+        entityColumn = "id"
+    )
+    val comida: Comida
+)
+
+data class InventarioTarjetaWithTarjeta(
+    @Embedded val invTarjeta: InventarioTarjeta,
+    @Relation(
+        parentColumn = "fk_tarjeta",
+        entityColumn = "id"
+    )
+    val tarjeta: Tarjeta
 )
 
 
@@ -260,6 +322,9 @@ interface InventarioNegocioDao {
      GROUP BY fk_negocio
   """)
     suspend fun countAllByInventario(inventarioId: Long): List<ItemCount>
+
+    @Query("SELECT cantidad FROM inventario_negocio WHERE fk_negocio = :fk_negocio")
+    suspend fun selectCantidad(fk_negocio : Long) : Int
 
 }
 

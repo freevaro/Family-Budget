@@ -33,7 +33,9 @@ import com.example.tfg.R
 import com.example.tfg.entity.Comida
 import com.example.tfg.entity.Negocio
 import com.example.tfg.entity.Tarjeta
+import com.example.tfg.viewmodel.InventarioComidaViewModel
 import com.example.tfg.viewmodel.InventarioNegocioViewModel
+import com.example.tfg.viewmodel.InventarioTarjetaViewModel
 import com.example.tfg.viewmodel.JugadorViewModel
 import com.example.tfg.viewmodel.ShopViewModel
 import com.example.tfg.viewmodel.TurnoManager
@@ -138,6 +140,9 @@ fun ShopScreen(
         }
 
     }
+
+    val invComidaVM: InventarioComidaViewModel    = viewModel()   // nuevo
+    val invTarjetaVM: InventarioTarjetaViewModel  = viewModel()   // nuevo
 
     val primerasComidas = remember(comidas) { comidas.take(3) }
     val tarjetasComida = primerasComidas.map { comida ->
@@ -472,7 +477,7 @@ fun ShopScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        /* shopVM.comprarComida(comida) */
+                        invComidaVM.comprarComida(comida)
                         selectedComida = null
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -551,7 +556,7 @@ fun ShopScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        /* shopVM.usarTarjeta(tarjeta) */
+                        invTarjetaVM.comprarTarjeta(tarjeta)
                         selectedTarjeta = null
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -833,7 +838,7 @@ fun ProductCard(
                     fontFamily = fuenteprincipal,
                     fontSize = Dimensions.responsiveSp(16f),
                     fontWeight = FontWeight.Bold,
-                    color = darkGreen,
+                    color = Color(0xFF4f7123),
                     modifier = Modifier.padding(bottom = Dimensions.heightPercentage(0.5f))
                 )
             }
@@ -918,7 +923,7 @@ fun ProductCardComida(
                     fontFamily = fuenteprincipal,
                     fontSize = Dimensions.responsiveSp(16f),
                     fontWeight = FontWeight.Bold,
-                    color = darkGreen,
+                    color = Color(0xFF4f7123),
                     modifier = Modifier.padding(bottom = Dimensions.heightPercentage(0.5f))
                 )
             }
@@ -991,7 +996,7 @@ fun ProductCardTarjeta(
                     fontFamily = fuenteprincipal,
                     fontSize = Dimensions.responsiveSp(16f),
                     fontWeight = FontWeight.Bold,
-                    color = darkGreen,
+                    color = Color(0xFF4f7123),
                     modifier = Modifier.padding(bottom = Dimensions.heightPercentage(0.5f))
                 )
             }

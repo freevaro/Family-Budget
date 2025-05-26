@@ -106,6 +106,7 @@ fun GameHomeScreen(
     val primaryGreen = Color(0xFF9CCD5C)
     val darkGreen = Color(0xFF6B9A2F)
     val lightGreen = Color(0xFFB5E878)
+    val verdeclarotexto = Color(0xFF4f7123)
     val context = LocalContext.current
     val fuenteprincipal = FontFamily(
         Font(R.font.barriecito_regular)
@@ -322,7 +323,7 @@ fun GameHomeScreen(
                         fontSize = Dimensions.responsiveSp(16f),
                         fontWeight = FontWeight.Bold,
                         fontFamily = fuenteprincipal,
-                        color = darkGreen,
+                        color = Color(0xFF4f7123),
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(bottom = Dimensions.heightPercentage(1f)),
@@ -335,7 +336,7 @@ fun GameHomeScreen(
                             player = player,
                             isCurrentPlayer = player.name == turnoName,
                             fuenteprincipal = fuenteprincipal,
-                            darkGreen = darkGreen
+                            darkGreen = Color(0xFF4f7123)
                         )
 
                         if (index < players.size - 1) {
@@ -467,7 +468,7 @@ fun FinancialStatRow(
         Icon(
             imageVector = icon,
             contentDescription = label,
-            tint = Color(0xFF6B9A2F),
+            tint = Color(0xFF4f7123),
             modifier = Modifier.size(Dimensions.widthPercentage(6f))
         )
 
@@ -477,7 +478,7 @@ fun FinancialStatRow(
             text = label,
             fontSize = Dimensions.responsiveSp(16f),
             fontFamily = fuenteprincipal,
-            color = Color(0xFF6B9A2F),
+            color = Color(0xFF4f7123),
             modifier = Modifier.weight(1f)
         )
 
@@ -486,7 +487,7 @@ fun FinancialStatRow(
             fontSize = Dimensions.responsiveSp(18f),
             fontWeight = FontWeight.Bold,
             fontFamily = fuenteprincipal,
-            color = Color(0xFF6B9A2F)
+            color = Color(0xFF4f7123)
         )
     }
 }

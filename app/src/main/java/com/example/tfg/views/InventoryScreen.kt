@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.rememberScrollState
@@ -14,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,11 +33,15 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.tfg.R
 import com.example.tfg.dao.InventarioNegocioWithNegocio
+import com.example.tfg.entity.Comida
+import com.example.tfg.entity.Tarjeta
+import com.example.tfg.viewmodel.ComidaViewModel
 import com.example.tfg.viewmodel.EstadoTurno.inventarioId
 import com.example.tfg.viewmodel.InventarioComidaViewModel
 import com.example.tfg.viewmodel.InventarioNegocioViewModel
 import com.example.tfg.viewmodel.InventarioTarjetaViewModel
 import com.example.tfg.viewmodel.NegocioViewModel
+import com.example.tfg.viewmodel.TarjetaViewModel
 import com.example.tfg.views.Count.comidaCount
 import com.example.tfg.views.Count.negocioCount
 import com.example.tfg.views.Count.tarjetaCount
@@ -81,16 +87,19 @@ fun SettingsScreen(
     val darkGreen    = Color(0xFF6B9A2F)
     val lightGreen   = Color(0xFFB5E878)
     val fuente       = FontFamily(Font(R.font.barriecito_regular))
-    var selectedItem by remember { mutableStateOf<InventarioNegocioWithNegocio?>(null) }
-
+    var selectedNegocio by remember { mutableStateOf<InventarioNegocioWithNegocio?>(null) }
+    var selectedComida by remember { mutableStateOf<Pair<Comida, Int>?>(null) }
+    var selectedTarjeta by remember { mutableStateOf<Pair<Tarjeta, Int>?>(null) }
 
     // ViewModels
-    val invNegVM: InventarioNegocioViewModel = viewModel()
-    val invFoodVM: InventarioComidaViewModel = viewModel()
-    val invCardVM: InventarioTarjetaViewModel = viewModel()
+    val invNegVM: InventarioNegocioViewModel      = viewModel()
+    val invComidaVM: InventarioComidaViewModel    = viewModel()
+    val invTarjetaVM: InventarioTarjetaViewModel  = viewModel()
     val negocioVM: NegocioViewModel           = viewModel()
     val comidaVM: InventarioComidaViewModel   = viewModel()
     val tarjetaVM: InventarioTarjetaViewModel = viewModel()
+    val comidaEntityVM: ComidaViewModel           = viewModel()
+    val tarjetaEntityVM: TarjetaViewModel         = viewModel()
 
 
 
@@ -99,17 +108,30 @@ fun SettingsScreen(
             .drop(1)     // <— descartamos el primer emptyList() para evitar parpadeos
     }.collectAsState(initial = emptyList())
 
+    val invComList by remember {
+        invComidaVM.itemsFor(inventarioId)
+            .drop(1)     // <— descartamos el primer emptyList() para evitar parpadeos
+    }.collectAsState(initial = emptyList())
+
+    val invTarjetaList by remember {
+        invTarjetaVM.itemsFor(inventarioId)
+            .drop(1)     // <— descartamos el primer emptyList() para evitar parpadeos
+    }.collectAsState(initial = emptyList())
+
+
+// Cargar datos
     LaunchedEffect(inventarioId) {
         invNegVM.refreshAll(inventarioId)
-        invFoodVM.refreshAll(inventarioId)
-        invCardVM.refreshAll(inventarioId)
+        invComidaVM.refreshAll(inventarioId)
+        invTarjetaVM.refreshAll(inventarioId)
     }
-    val comidaItems by comidaVM.allItems.collectAsState(initial = emptyList())
-    val tarjetaItems by tarjetaVM.allItems.collectAsState(initial = emptyList())
+    val allComidas       by comidaEntityVM.allComidas.observeAsState(emptyList())
+    val allTarjetas      by tarjetaEntityVM.allTarjetas.observeAsState(emptyList())
 
 
 
-    val inventoryItems = invNegList.map { withNeg ->
+    // Mapear a items genéricos
+    val negocioItems = invNegList.map { withNeg ->
         InventoryItem(
             name     = withNeg.negocio.nombre,
             quantity = withNeg.invNegocio.cantidad,
@@ -117,11 +139,40 @@ fun SettingsScreen(
             category = "Negocio"
         )
     }
+    // Mapear a items genéricos
+    val comidaItems = invComList.map { withCom ->
+        InventoryItem(
+            name     = withCom.comida.nombre,
+            quantity = withCom.invComida.cantidad,
+            icon     = when (withCom.comida.nombre) {
+                "Comida Diaria"  -> Icons.Default.Fastfood
+                "Comida Semanal" -> Icons.Default.Restaurant
+                "Comida Premium" -> Icons.Default.RestaurantMenu
+                else             -> Icons.Default.Fastfood
+            },
+            category = "Negocio"
+        )
+    }
+    // Mapear a items genéricos
+    val tarjetaItems = invTarjetaList.map { withTar ->
+        InventoryItem(
+            name     = withTar.tarjeta.nombre,
+            quantity = withTar.invTarjeta.cantidad,
+            icon     = when (withTar.tarjeta.nombre) {
+                "Tarjeta Negocio"  -> Icons.Default.CardGiftcard
+                "Tarjeta Dinero" -> Icons.Default.CardGiftcard
+                "Tarjeta Aleatoria" -> Icons.Default.QuestionMark
+                else             -> Icons.Default.CardGiftcard
+            },
+            category = "Negocio"
+        )
+    }
+    val inventoryItems = negocioItems + comidaItems + tarjetaItems
 
     // Totales
     comidaCount  = comidaItems.size
     tarjetaCount = tarjetaItems.size
-    negocioCount = inventoryItems.sumOf { it.quantity }
+    negocioCount = negocioItems.size
 
     Box(
         modifier = Modifier
@@ -140,7 +191,7 @@ fun SettingsScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 24.dp),
+                    .padding(vertical = 60.dp),
                 verticalAlignment   = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center
             ) {
@@ -158,7 +209,10 @@ fun SettingsScreen(
                     fontFamily= fuente,
                     color     = Color.Black
                 )
+
             }
+
+
 
             // Resumen estadístico
             Card(
@@ -167,6 +221,7 @@ fun SettingsScreen(
                     .padding(bottom = 16.dp),
                 colors      = CardDefaults.cardColors(containerColor = lightGreen.copy(alpha = 0.7f)),
                 shape       = RoundedCornerShape(12.dp)
+
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
                     Text(
@@ -174,7 +229,7 @@ fun SettingsScreen(
                         fontSize   = 18.sp,
                         fontWeight = FontWeight.Bold,
                         fontFamily = fuente,
-                        color      = darkGreen,
+                        color      = Color(0xFF4f7123),
                         textAlign  = TextAlign.Center,
                         modifier   = Modifier.fillMaxWidth().padding(bottom = 8.dp)
                     )
@@ -189,28 +244,113 @@ fun SettingsScreen(
                 }
             }
 
-            // Grid con los items mapeados
+            // Sección Negocios
+            CategorySection(
+                title = "NEGOCIOS",
+                fuenteprincipal = fuente,
+                darkGreen = darkGreen,
+                lightGreen = lightGreen
+            )
             LazyVerticalGrid(
-                columns             = GridCells.Fixed(3),
-                modifier            = Modifier.height(260.dp),
-                verticalArrangement   = Arrangement.spacedBy(12.dp),
+                columns = GridCells.Fixed(3),
+                modifier = Modifier.height(200.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(inventoryItems) { item ->
-                    val negocioWithDetails = invNegList.find { it.negocio.nombre == item.name }
-                    InventoryItemCardNegocio(
-                        item = item,
-                        onClick = { negocioWithDetails?.let { selectedItem = it } }
-                    )
+                if (invNegList.isEmpty()){
+                    item(span = { GridItemSpan(3) }) {
+                        EmptySectionMessage(
+                            icon = Icons.Default.Info,
+                            message = "En este momento no tienes adquirido ningún negocio. Si quieres adquirir alguno, prueba en la tienda.",
+                            color = Color.White,
+                            fuente = fuente
+                        )
+                    }
+                }else{
+                    items(invNegList) { withNeg ->
+                        val item = InventoryItem(withNeg.negocio.nombre, withNeg.invNegocio.cantidad, iconFromString(withNeg.negocio.icon), "Negocio")
+                        InventoryItemCardNegocio(item) { selectedNegocio = withNeg }
+                    }
+                }
+            }
+
+            // Sección Comidas
+            CategorySection(
+                title = "COMIDAS",
+                fuenteprincipal = fuente,
+                darkGreen = darkGreen,
+                lightGreen = lightGreen
+            )
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier.height(200.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (invComList.isEmpty()){
+                    item(span = { GridItemSpan(3) }) {
+                        EmptySectionMessage(
+                            icon = Icons.Default.Info,
+                            message = "En este momento no tienes adquirida ninguna comida. Si quieres adquirir alguna, prueba en la tienda.",
+                            color = Color.White,
+                            fuente = fuente
+                        )
+                    }
+                }else{
+                    items(invComList) { withCom ->
+                        val icon = when (withCom.comida.nombre) {
+                            "Comida Diaria" -> Icons.Default.Fastfood
+                            "Comida Semanal" -> Icons.Default.Restaurant
+                            "Comida Premium" -> Icons.Default.RestaurantMenu
+                            else -> Icons.Default.Fastfood
+                        }
+                        val item = InventoryItem(withCom.comida.nombre, withCom.invComida.cantidad, icon, "Comida")
+                        InventoryItemCardNegocio(item) { selectedComida = withCom.comida to withCom.invComida.cantidad }
+                    }
+                }
+            }
+
+            // Sección Tarjetas Bonus
+            CategorySection(
+                title = "TARJETAS BONUS",
+                fuenteprincipal = fuente,
+                darkGreen = darkGreen,
+                lightGreen = lightGreen
+            )
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(3),
+                modifier = Modifier.height(200.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                if (invTarjetaList.isEmpty()){
+                    item(span = { GridItemSpan(3) }) {
+                        EmptySectionMessage(
+                            icon = Icons.Default.Info,
+                            message = "En este momento no tienes adquirida ninguna tarjeta. Si quieres adquirir alguna, prueba en la tienda.",
+                            color = Color.White,
+                            fuente = fuente
+                        )
+                    }
+                }else{
+                    items(invTarjetaList) { withTar ->
+                        val icon = when (withTar.tarjeta.nombre) {
+                            "Tarjeta Negocio", "Tarjeta Dinero" -> Icons.Default.CardGiftcard
+                            "Tarjeta Aleatoria" -> Icons.Default.QuestionMark
+                            else -> Icons.Default.CardGiftcard
+                        }
+                        val item = InventoryItem(withTar.tarjeta.nombre, withTar.invTarjeta.cantidad, icon, "Tarjeta")
+                        InventoryItemCardNegocio(item) { selectedTarjeta = withTar.tarjeta to withTar.invTarjeta.cantidad }
+                    }
                 }
             }
         }
 
         // Modal de detalles del negocio
-        selectedItem?.let { negocioWithDetails ->
+        selectedNegocio?.let { negocioWithDetails ->
             val negocio = negocioWithDetails.negocio
             AlertDialog(
-                onDismissRequest = { selectedItem = null },
+                onDismissRequest = { selectedNegocio = null },
                 containerColor = lightGreen.copy(alpha = 0.9f),
                 shape = RoundedCornerShape(12.dp),
                 titleContentColor = Color.Black,
@@ -297,7 +437,7 @@ fun SettingsScreen(
                 },
                 confirmButton = {
                     Button(
-                        onClick = { selectedItem = null },
+                        onClick = { selectedNegocio = null },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = darkGreen,
                             contentColor = Color.White
@@ -316,6 +456,208 @@ fun SettingsScreen(
                 }
             )
         }
+        selectedComida?.let { (comida, cantidad) ->
+            AlertDialog(
+                onDismissRequest = { selectedComida = null },
+                containerColor   = lightGreen.copy(alpha = 0.9f),
+                shape            = RoundedCornerShape(12.dp),
+                titleContentColor= Color.Black,
+                textContentColor = Color.Black,
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Icono circular
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(darkGreen.copy(alpha = 0.7f))
+                        ) {
+                            val icon = when (comida.nombre) {
+                                "Comida Diaria"  -> Icons.Default.Fastfood
+                                "Comida Semanal" -> Icons.Default.Restaurant
+                                "Comida Premium" -> Icons.Default.RestaurantMenu
+                                else             -> Icons.Default.Fastfood
+                            }
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = comida.nombre,
+                                tint = Color.White,
+                                modifier = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            text       = comida.nombre,
+                            fontFamily = fuente,
+                            fontSize   = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                text = {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp)
+                    ) {
+                        DetalleComidaItem(
+                            icon   = Icons.Default.Timer,
+                            texto  = "Duración:",
+                            valor  = "${comida.duracion} días",
+                            fuentePrincipal = fuente
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        DetalleComidaItem(
+                            icon   = Icons.Default.AttachMoney,
+                            texto  = "Precio:",
+                            valor  = "$${comida.precio}",
+                            fuentePrincipal = fuente
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        DetalleComidaItem(
+                            icon   = Icons.Default.TrendingUp,
+                            texto  = "Efecto:",
+                            valor  = "+${comida.efecto}",
+                            fuentePrincipal = fuente
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        DetalleComidaItem(
+                            icon   = Icons.Default.Numbers,
+                            texto  = "Cantidad:",
+                            valor  = cantidad.toString(),
+                            fuentePrincipal = fuente
+                        )
+                    }
+                },
+                confirmButton = {
+                    Button(
+                        onClick  = { selectedComida = null },
+                        colors   = ButtonDefaults.buttonColors(
+                            containerColor = darkGreen,
+                            contentColor   = Color.White
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Text(
+                            "CERRAR",
+                            fontFamily = fuente,
+                            fontSize   = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            )
+        }
+
+        // ——————————
+// Modal Detalle de Tarjeta Bonus
+// ——————————
+        selectedTarjeta?.let { (tarjeta, cantidad) ->
+            AlertDialog(
+                onDismissRequest = { selectedTarjeta = null },
+                containerColor   = lightGreen.copy(alpha = 0.9f),
+                shape            = RoundedCornerShape(12.dp),
+                titleContentColor= Color.Black,
+                textContentColor = Color.Black,
+                title = {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(CircleShape)
+                                .background(darkGreen.copy(alpha = 0.7f))
+                        ) {
+                            Icon(
+                                imageVector    = Icons.Default.CardGiftcard,
+                                contentDescription = tarjeta.nombre,
+                                tint           = Color.White,
+                                modifier       = Modifier.size(24.dp)
+                            )
+                        }
+                        Spacer(Modifier.width(12.dp))
+                        Text(
+                            text       = tarjeta.nombre,
+                            fontFamily = fuente,
+                            fontSize   = 24.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                },
+                text = {
+                    if (tarjeta.nombre == "Tarjeta Negocio" || tarjeta.nombre == "Tarjeta Dinero" || tarjeta.nombre == "Tarjeta Aleatoria"){
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                        ) {
+                            DetalleTarjetaItem(
+                                icon   = Icons.Default.Info,
+                                texto  = "Efecto:",
+                                valor  = tarjeta.nombreEfecto,
+                                fuentePrincipal = fuente
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            DetalleTarjetaItem(
+                                icon   = Icons.Default.Numbers,
+                                texto  = "Cantidad:",
+                                valor  = cantidad.toString(),
+                                fuentePrincipal = fuente
+                            )
+
+                        }
+
+                    }
+
+                },
+                confirmButton = {
+                    Button(
+                        onClick  = { selectedTarjeta = null },
+                        colors   = ButtonDefaults.buttonColors(
+                            containerColor = darkGreen,
+                            contentColor   = Color.White
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Text(
+                            "CERRAR",
+                            fontFamily = fuente,
+                            fontSize   = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                    Button(
+                        onClick = { selectedNegocio = null },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = darkGreen,
+                            contentColor = Color.White
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        Text(
+                            "CANJEAR",
+                            fontFamily = fuente,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                }
+            )
+        }
     }
 }
 
@@ -328,9 +670,9 @@ fun InventoryStat(
     darkGreen: Color
 ) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-        Icon(icon, label, tint = darkGreen, modifier = Modifier.size(24.dp))
-        Text(label, fontFamily = fuente, fontSize = 14.sp, color = darkGreen)
-        Text(value.toString(), fontFamily = fuente, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = darkGreen)
+        Icon(icon, label, tint = Color(0xFF4f7123), modifier = Modifier.size(24.dp))
+        Text(label, fontFamily = fuente, fontSize = 14.sp, color = Color(0xFF4f7123))
+        Text(value.toString(), fontFamily = fuente, fontSize = 18.sp, fontWeight = FontWeight.Bold, color = Color(0xFF4f7123))
     }
 }
 
@@ -441,5 +783,40 @@ fun DetalleNegocioItemInventario(
             fontWeight = FontWeight.Bold,
             color = Color.Black
         )
+    }
+}
+
+@Composable
+fun EmptySectionMessage(
+    icon: ImageVector,
+    message: String,
+    color: Color,
+    fuente: FontFamily
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(200.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(horizontal = 16.dp)
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = color,
+                modifier = Modifier.size(48.dp)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = message,
+                color = Color.White,
+                fontFamily = fuente,
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
