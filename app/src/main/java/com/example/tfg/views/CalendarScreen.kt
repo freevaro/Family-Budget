@@ -227,7 +227,7 @@ fun CalendarScreen(
                         Text(
                             text = "Día $selectedDay  –  Turno X",
                             fontFamily  = fuenteprincipal,
-                            fontSize    = 18.sp,
+                            fontSize    = Dimensions.responsiveSp(18F),
                             fontWeight  = FontWeight.Bold,
                             color = Color(0xFF4f7123)
                         )
@@ -235,7 +235,7 @@ fun CalendarScreen(
                             text = "El día seleccionado no ha ocurrido y todavía no se ha generado un resumen.",
                             fontFamily = fuenteprincipal,
                             color = Color.Black,
-                            fontSize   = 20.sp
+                            fontSize   = Dimensions.responsiveSp(20F)
                         )
                     }
                 }
@@ -392,7 +392,7 @@ fun CalendarDay(
     ) {
         Text(
             text = day.toString(),
-            fontSize = 18.sp,            // número más grande
+            fontSize = Dimensions.responsiveSp(18F),            // número más grande
             fontWeight = if (isCurrentDay) FontWeight.Bold else FontWeight.Medium,
             fontFamily = fuenteprincipal,
             color = if (isCurrentDay) Color.White else Color(0xFF354B18)
