@@ -270,76 +270,84 @@ fun CalendarScreen(
                             modifier = Modifier.padding(bottom = Dimensions.heightPercentage(1f))
                         )
 
+                        // Fila 1: Dinero | Negocios
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.AttachMoney,
-                                contentDescription = "Dinero",
-                                tint = Color(0xFF4f7123),
-                                modifier = Modifier.size(Dimensions.widthPercentage(5f))
-                            )
-                            Text(
-                                text = " Dinero: ${resumen?.dinero}",
-                                fontFamily = fuenteprincipal,
-                                fontSize = Dimensions.responsiveSp(16f),
-                                color = Color.Black
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.AttachMoney,
+                                    contentDescription = "Dinero",
+                                    tint = Color(0xFF4f7123),
+                                    modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    text = "Dinero: ${resumen?.dinero}",
+                                    fontFamily = fuenteprincipal,
+                                    fontSize = Dimensions.responsiveSp(16f),
+                                    color = Color.Black
+                                )
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.Business,
+                                    contentDescription = "Negocios",
+                                    tint = Color(0xFF4f7123),
+                                    modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    text = "Negocios: ${resumen?.negocios}",
+                                    fontFamily = fuenteprincipal,
+                                    fontSize = Dimensions.responsiveSp(16f),
+                                    color = Color.Black
+                                )
+                            }
                         }
 
+                        // Fila 2: Ingresos | Gastos
                         Row(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Business,
-                                contentDescription = "Negocios",
-                                tint = Color(0xFF4f7123),
-                                modifier = Modifier.size(Dimensions.widthPercentage(5f))
-                            )
-                            Text(
-                                text = " Negocios: ${resumen?.negocios}",
-                                fontFamily = fuenteprincipal,
-                                fontSize = Dimensions.responsiveSp(16f),
-                                color = Color.Black
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.TrendingUp,
-                                contentDescription = "Ingresos",
-                                tint = Color(0xFF4f7123),
-                                modifier = Modifier.size(Dimensions.widthPercentage(5f))
-                            )
-                            Text(
-                                text = " Ingresos diarios: ${resumen?.ingresos}",
-                                fontFamily = fuenteprincipal,
-                                fontSize = Dimensions.responsiveSp(16f),
-                                color = Color.Black
-                            )
-                        }
-
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.TrendingDown,
-                                contentDescription = "Gastos diarios",
-                                tint = darkGreen,
-                                modifier = Modifier.size(Dimensions.widthPercentage(5f))
-                            )
-                            Text(
-                                text = " Gastos diarios: $80/día",
-                                fontFamily = fuenteprincipal,
-                                fontSize = Dimensions.responsiveSp(16f),
-                                color = Color.Black
-                            )
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.TrendingUp,
+                                    contentDescription = "Ingresos",
+                                    tint = Color(0xFF4f7123),
+                                    modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    text = "Ingresos: ${resumen?.ingresos}",
+                                    fontFamily = fuenteprincipal,
+                                    fontSize = Dimensions.responsiveSp(16f),
+                                    color = Color.Black
+                                )
+                            }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                Icon(
+                                    imageVector = Icons.Default.TrendingDown,
+                                    contentDescription = "Gastos",
+                                    tint = darkGreen,
+                                    modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                                )
+                                Spacer(Modifier.width(4.dp))
+                                Text(
+                                    text = "Gastos: $80/día",
+                                    fontFamily = fuenteprincipal,
+                                    fontSize = Dimensions.responsiveSp(16f),
+                                    color = Color.Black
+                                )
+                            }
                         }
                     }
                 }
