@@ -3,7 +3,6 @@ package com.example.tfg.dao
 import androidx.lifecycle.LiveData
 import androidx.room.*
 import com.example.tfg.entity.*
-import androidx.room.withTransaction
 import com.example.tfg.views.ItemCount
 import kotlinx.coroutines.flow.Flow
 
@@ -323,6 +322,39 @@ interface TiendaNegocioDao {
     /** Devuelve directamente los objetos Negocio para esa tienda */
     @Query("SELECT n.* FROM negocio n INNER JOIN tienda_negocio tn ON n.id = tn.fk_negocio WHERE tn.fk_tienda = :tiendaId")
     fun getNegociosForTienda(tiendaId: Long): LiveData<List<Negocio>>
+}
+
+@Dao
+interface ResumenDiaDao {
+    @Insert suspend fun insert(resumen: ResumenDia): Long
+
+    @Update suspend fun update(resumen: ResumenDia)
+
+    @Delete suspend fun delete(resumen: ResumenDia)
+
+    /** Obtiene el resumen de un jugador en un día concreto */
+    @Query("""
+      SELECT * 
+        FROM resumen_dia 
+       WHERE numDia = :numDia
+         AND fk_jugador = :jugadorId
+       LIMIT 1
+    """)
+    fun getResumenLive(numDia: Int, jugadorId: Long): LiveData<ResumenDia?>
+
+    /** (Opcional) acceso síncrono desde coroutine */
+    @Query("""
+      SELECT * 
+        FROM resumen_dia 
+       WHERE numDia = :numDia
+         AND fk_jugador = :jugadorId
+       LIMIT 1
+    """)
+    suspend fun getResumen(numDia: Int, jugadorId: Long): ResumenDia?
+
+    /** Lista todos los resúmenes de un jugador */
+    @Query("SELECT * FROM resumen_dia WHERE fk_jugador = :jugadorId")
+    fun getAllByJugador(jugadorId: Long): LiveData<List<ResumenDia>>
 }
 
 

@@ -13,8 +13,11 @@ import com.example.tfg.AppDatabase
 import com.example.tfg.dao.InventarioNegocioWithNegocio
 import com.example.tfg.entity.*
 import com.example.tfg.viewmodel.EstadoTurno.dinero
+import com.example.tfg.viewmodel.EstadoTurno.idJugador
 import com.example.tfg.viewmodel.PartidaDatos.listaJugadores
 import com.example.tfg.viewmodel.PartidaDatos.partidaId
+import com.example.tfg.views.Resumen
+import com.example.tfg.views.Resumen.numDia
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -523,6 +526,95 @@ class InventarioNegocioViewModel(application: Application) : AndroidViewModel(ap
     fun refreshAll(inventarioId: Long) = viewModelScope.launch {
         val list = dao.countAllByInventario(inventarioId)
         _counts.value = list.associate { it.itemId to it.count }
+    }
+
+}
+
+class ResumenDiaViewModel(application: Application) : AndroidViewModel(application) {
+    private val db                 = AppDatabase.getInstance(application)
+
+    private val dao = db.resumenDiaDao()
+    private val invNegDao  = db.inventarioNegocioDao()
+
+
+    fun applyResumen(dia : Int){
+        var resumen = dao.getResumenLive(dia, idJugador)
+        if (resumen.isInitialized){
+            Resumen.id = resumen.value?.id!!
+            Resumen.fk_jugador = resumen.value?.fkJugador!!
+            Resumen.numDia = resumen.value?.numDia!!
+            Resumen.dinero = resumen.value?.dinero!!.toInt()
+            Resumen.negocios = resumen.value?.negocios!!
+            Resumen.ingresos = resumen.value?.ingresos!!.toInt()
+            Resumen.gastos = resumen.value?.gastos!!.toInt()
+            Resumen.turno = resumen.value?.turno!!
+        }else{
+            Resumen.id = 0
+            Resumen.fk_jugador = 0
+            Resumen.numDia = 0
+            Resumen.dinero = 0
+            Resumen.negocios = 0
+            Resumen.ingresos = 0
+            Resumen.gastos = 0
+            Resumen.turno = 0
+        }
+    }
+
+    /** LiveData con el resumen del día actual para el jugador */
+    fun getResumen(numDia : Int, jugadorId: Long): LiveData<ResumenDia?> =
+        dao.getResumenLive(numDia, jugadorId)
+
+    /** Inserta un nuevo resumen */
+    fun insert(resumen: ResumenDia) = viewModelScope.launch {
+        dao.insert(resumen)
+    }
+
+    /** Actualiza un resumen existente */
+    fun update(resumen: ResumenDia) = viewModelScope.launch {
+        dao.update(resumen)
+    }
+
+    /** Elimina un resumen */
+    fun delete(resumen: ResumenDia) = viewModelScope.launch {
+        dao.delete(resumen)
+    }
+
+    /** Guarda o actualiza el resumen del turno actual (día + jugador) */
+    fun saveResumenTurnoActual() = viewModelScope.launch {
+        val diaId      = EstadoTurno.diaNum
+        val jugadorId  = EstadoTurno.idJugador
+        val dinero     = EstadoTurno.dinero.toDouble()
+        val ingresos   = EstadoTurno.ingresos.toDouble()
+        val gastos     = EstadoTurno.costes.toDouble()
+        val inventarioId = EstadoTurno.inventarioId
+        val turno = TurnoManager.turno
+
+
+        // 1) Cuenta totales de negocios en este inventario
+        val counts = invNegDao.countAllByInventario(inventarioId)      // List<ItemCount>
+        val totalNegocios = counts.sumOf { it.count }
+
+        // 2) ¿Ya existe un resumen para este día/jugador?
+        val existente = dao.getResumen(diaId, jugadorId)
+
+        // 3) Crea la entidad con o sin id (auto-generate cuando id=0)
+        val resumen = ResumenDia(
+            id         = existente?.id ?: 0,
+            numDia      = diaId,
+            fkJugador  = jugadorId,
+            dinero     = dinero,
+            negocios   = totalNegocios,
+            ingresos   = ingresos,
+            gastos     = gastos,
+            turno      = turno + 1
+        )
+
+        // 4) Inserta o actualiza
+        if (existente != null) {
+            dao.update(resumen)
+        } else {
+            dao.insert(resumen)
+        }
     }
 
 }

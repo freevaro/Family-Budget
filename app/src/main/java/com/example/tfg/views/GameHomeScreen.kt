@@ -64,6 +64,7 @@ import com.example.tfg.viewmodel.PartidaJugadorViewModel
 import com.example.tfg.viewmodel.PositionsViewModel
 import com.example.tfg.viewmodel.ShopViewModel
 import com.example.tfg.viewmodel.TurnoManager
+import com.example.tfg.viewmodel.ResumenDiaViewModel
 import com.example.tfg.viewmodel.TurnoManager.playerId
 
 /**
@@ -109,6 +110,7 @@ fun GameHomeScreen(
     val fuenteprincipal = FontFamily(
         Font(R.font.barriecito_regular)
     )
+    val resumenDiaVM : ResumenDiaViewModel = viewModel()
     val jugadoresViewModel : JugadorViewModel = viewModel()
     val jugadoresPPViewModel : PartidaJugadorViewModel = viewModel()
     val viewModel: PositionsViewModel = viewModel()
@@ -279,7 +281,9 @@ fun GameHomeScreen(
 
 
             Button(
-                onClick = { TurnoManager.next()
+                onClick = {
+                    resumenDiaVM.saveResumenTurnoActual()
+                    TurnoManager.next()
                     shopVM.generarTiendaNueva(idJugador, diaId)
                 },
                 modifier = Modifier

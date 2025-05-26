@@ -35,7 +35,8 @@ import kotlinx.coroutines.launch
         Partida::class,
         PartidaJugador::class,
         PartidaDia::class,
-        TiendaNegocio::class
+        TiendaNegocio::class,
+        ResumenDia::class
     ],
     version = 1,
     exportSchema = false
@@ -117,6 +118,10 @@ abstract class AppDatabase : RoomDatabase() {
      * DAO para acceder a la tabla de relación `TiendaNegocio`.
      */
     abstract fun tiendaNegocioDao(): TiendaNegocioDao
+
+
+    abstract fun resumenDiaDao() : ResumenDiaDao
+
 
 
 

@@ -1,6 +1,6 @@
 package com.example.tfg.views
 
-import BottomNavigationBar
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,10 +15,13 @@ import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -29,7 +32,14 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tfg.R
+import com.example.tfg.viewmodel.EstadoTurno
+import com.example.tfg.viewmodel.EstadoTurno.diaNum
+import com.example.tfg.viewmodel.EstadoTurno.idJugador
+import com.example.tfg.viewmodel.ResumenDiaViewModel
+import com.example.tfg.viewmodel.TurnoManager
 
 
 /**
@@ -50,7 +60,6 @@ import com.example.tfg.R
 
 @Composable
 fun CalendarScreen(
-    currentDay: Int = 10,
     totalDays: Int = 31,
     onNavigateToHome: () -> Unit = {},
     onNavigateToBusiness: () -> Unit = {},
@@ -63,6 +72,13 @@ fun CalendarScreen(
     val darkGreen = Color(0xFF6B9A2F)
     val lightGreen = Color(0xFFB5E878)
     val fuenteprincipal = FontFamily(Font(R.font.barriecito_regular))
+    val resumenDiaVM: ResumenDiaViewModel = viewModel()
+    val currentDay = diaNum
+    var selectedDay by remember { mutableStateOf(EstadoTurno.diaNum) }
+    val resumen by resumenDiaVM
+        .getResumen(selectedDay, idJugador)
+        .observeAsState()
+
 
     // Generar días del mes
     val days = (1..totalDays).toList()
@@ -108,151 +124,218 @@ fun CalendarScreen(
                 )
             }
 
-            // Días de la semana
+            val weekDays = listOf("L","M","X","J","V","S","D")
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = Dimensions.heightPercentage(1f), top = Dimensions.widthPercentage(7f)),
+                    .padding(vertical = 8.dp),
                 horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                listOf("L", "M", "X", "J", "V", "S", "D").forEach { day ->
-                    Text(
-                        text = day,
-                        color = Color.White,
-                        fontSize = Dimensions.responsiveSp(16f),
-                        fontWeight = FontWeight.Bold,
-                        fontFamily = fuenteprincipal,
-                        modifier = Modifier.width(Dimensions.widthPercentage(8f)),
-                        textAlign = TextAlign.Center
-                    )
+                weekDays.forEach { wd ->
+                    Box(
+                        modifier = Modifier
+                            .weight(1f),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = wd,
+                            fontSize = 16.sp,
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold,
+                            textAlign = TextAlign.Center
+                        )
+                    }
                 }
             }
+            Spacer(Modifier.height(Dimensions.heightPercentage(3f)))
 
-            // Calendario con peso para que no empuje el Card fuera de pantalla
+            // 2) Grid de días
             LazyVerticalGrid(
                 columns = GridCells.Fixed(7),
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .padding(bottom = Dimensions.heightPercentage(1f))
+                    .wrapContentHeight(),           // permite 5 filas en lugar de clipping
+                horizontalArrangement = Arrangement.SpaceEvenly,
+                verticalArrangement = Arrangement.spacedBy(8.dp),  // menos espacio vertical
+                contentPadding = PaddingValues(horizontal = 4.dp)
             ) {
-                // Espacios vacíos para alinear el primer día
-                items(2) {
-                    Box(modifier = Modifier.size(Dimensions.widthPercentage(12f)))
-                }
-
-                // Días del mes
                 items(days) { day ->
                     CalendarDay(
-                        day = day,
-                        isCurrentDay = day == currentDay,
+                        day             = day,
+                        isCurrentDay    = day == EstadoTurno.diaNum,
+                        isSelected      = day == selectedDay,
                         fuenteprincipal = fuenteprincipal,
-                        darkGreen = darkGreen,
-                        lightGreen = lightGreen
+                        darkGreen       = darkGreen,
+                        lightGreen      = lightGreen,
+                        onClick         = { selectedDay = day },
+                        modifier        = Modifier
+                            .fillMaxWidth()             // ocupa todo el ancho de la columna
+                            .aspectRatio(1f)            // fuerza ratio 1:1
                     )
                 }
             }
 
-            // Información del día actual
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = Dimensions.heightPercentage(4.5f)),
-                colors = CardDefaults.cardColors(
-                    containerColor = lightGreen.copy(alpha = 0.7f)
-                ),
-                shape = RoundedCornerShape(Dimensions.widthPercentage(4f))
-            ) {
-                Column(
-                    modifier = Modifier.padding(Dimensions.widthPercentage(4f))
+            Spacer(Modifier.height(16.dp))
+
+
+            if (selectedDay == EstadoTurno.diaNum) {
+                // Día actual: mostramos aviso
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Dimensions.heightPercentage(4.5f)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = lightGreen.copy(alpha = 0.7f)
+                    ),
+                    shape = RoundedCornerShape(Dimensions.widthPercentage(4f))
                 ) {
-                    Text(
-                        text = "Día $currentDay - Turno X",
-                        fontFamily = fuenteprincipal,
-                        fontSize = Dimensions.responsiveSp(20f),
-                        fontWeight = FontWeight.Bold,
-                        color = darkGreen,
-                        modifier = Modifier.padding(bottom = Dimensions.heightPercentage(2f))
-                    )
-
-                    Text(
-                        text = "Resumen Actual:",
-                        fontFamily = fuenteprincipal,
-                        fontSize = Dimensions.responsiveSp(18f),
-                        color = darkGreen,
-                        modifier = Modifier.padding(bottom = Dimensions.heightPercentage(1f))
-                    )
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.AttachMoney,
-                            contentDescription = "Dinero",
-                            tint = darkGreen,
-                            modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                        Text(
+                            text = "Día $selectedDay  –  Turno ${TurnoManager.turno}",
+                            fontFamily  = fuenteprincipal,
+                            fontSize    = 18.sp,
+                            fontWeight  = FontWeight.Bold
                         )
                         Text(
-                            text = " Dinero: $1000",
+                            text = "El día actual no ha acabado y todavía no se ha generado un resumen.",
                             fontFamily = fuenteprincipal,
-                            fontSize = Dimensions.responsiveSp(16f),
-                            color = Color.Black
+                            fontSize   = 20.sp
                         )
                     }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                }
+            } else if (selectedDay > EstadoTurno.diaNum){
+                // Día posterior: mostramos aviso
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Dimensions.heightPercentage(4.5f)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = lightGreen.copy(alpha = 0.7f)
+                    ),
+                    shape = RoundedCornerShape(Dimensions.widthPercentage(4f))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Business,
-                            contentDescription = "Negocios",
-                            tint = darkGreen,
-                            modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                        Text(
+                            text = "Día $selectedDay  –  Turno X",
+                            fontFamily  = fuenteprincipal,
+                            fontSize    = 18.sp,
+                            fontWeight  = FontWeight.Bold
                         )
                         Text(
-                            text = " Negocios: 3",
+                            text = "El día seleccionado no ha ocurrido y todavía no se ha generado un resumen.",
                             fontFamily = fuenteprincipal,
-                            fontSize = Dimensions.responsiveSp(16f),
-                            color = Color.Black
+                            fontSize   = 20.sp
                         )
                     }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                }
+            }else{
+                // Información del día actual
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = Dimensions.heightPercentage(4.5f)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = lightGreen.copy(alpha = 0.7f)
+                    ),
+                    shape = RoundedCornerShape(Dimensions.widthPercentage(4f))
+                ) {
+                    Column(
+                        modifier = Modifier.padding(Dimensions.widthPercentage(4f))
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.TrendingUp,
-                            contentDescription = "Ingresos",
-                            tint = darkGreen,
-                            modifier = Modifier.size(Dimensions.widthPercentage(5f))
-                        )
                         Text(
-                            text = " Ingresos totales: $250/día",
+                            text = "Día $selectedDay - Turno " + resumen?.turno,
                             fontFamily = fuenteprincipal,
-                            fontSize = Dimensions.responsiveSp(16f),
-                            color = Color.Black
+                            fontSize = Dimensions.responsiveSp(20f),
+                            fontWeight = FontWeight.Bold,
+                            color = darkGreen,
+                            modifier = Modifier.padding(bottom = Dimensions.heightPercentage(2f))
                         )
-                    }
 
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.TrendingDown,
-                            contentDescription = "Gastos diarios",
-                            tint = darkGreen,
-                            modifier = Modifier.size(Dimensions.widthPercentage(5f))
-                        )
                         Text(
-                            text = " Gastos diarios: $80/día",
+                            text = "Resumen Actual:",
                             fontFamily = fuenteprincipal,
-                            fontSize = Dimensions.responsiveSp(16f),
-                            color = Color.Black
+                            fontSize = Dimensions.responsiveSp(18f),
+                            color = darkGreen,
+                            modifier = Modifier.padding(bottom = Dimensions.heightPercentage(1f))
                         )
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AttachMoney,
+                                contentDescription = "Dinero",
+                                tint = darkGreen,
+                                modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                            )
+                            Text(
+                                text = " Dinero: ${resumen?.dinero}",
+                                fontFamily = fuenteprincipal,
+                                fontSize = Dimensions.responsiveSp(16f),
+                                color = Color.Black
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Business,
+                                contentDescription = "Negocios",
+                                tint = darkGreen,
+                                modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                            )
+                            Text(
+                                text = " Negocios: ${resumen?.negocios}",
+                                fontFamily = fuenteprincipal,
+                                fontSize = Dimensions.responsiveSp(16f),
+                                color = Color.Black
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.TrendingUp,
+                                contentDescription = "Ingresos",
+                                tint = darkGreen,
+                                modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                            )
+                            Text(
+                                text = " Ingresos diarios: ${resumen?.ingresos}",
+                                fontFamily = fuenteprincipal,
+                                fontSize = Dimensions.responsiveSp(16f),
+                                color = Color.Black
+                            )
+                        }
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.TrendingDown,
+                                contentDescription = "Gastos diarios",
+                                tint = darkGreen,
+                                modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                            )
+                            Text(
+                                text = " Gastos diarios: $80/día",
+                                fontFamily = fuenteprincipal,
+                                fontSize = Dimensions.responsiveSp(16f),
+                                color = Color.Black
+                            )
+                        }
                     }
                 }
             }
@@ -276,31 +359,57 @@ fun CalendarScreen(
 fun CalendarDay(
     day: Int,
     isCurrentDay: Boolean,
+    isSelected: Boolean,
     fuenteprincipal: FontFamily,
     darkGreen: Color,
-    lightGreen: Color
+    lightGreen: Color,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
+    val background = when {
+        isCurrentDay -> darkGreen
+        isSelected   -> lightGreen.copy(alpha = 0.5f)
+        else         -> Color.Transparent
+    }
+    val border = when {
+        isCurrentDay -> null
+        isSelected   -> BorderStroke(2.dp, darkGreen)
+        else         -> null
+    }
+
     Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .padding(Dimensions.widthPercentage(1f))
-            .size(Dimensions.widthPercentage(10f))
-            .clip(CircleShape)
-            .background(
-                if (isCurrentDay) darkGreen else Color.Transparent
-            )
-            .border(
-                width = if (isCurrentDay) 0.dp else 1.dp,
-                color = if (isCurrentDay) Color.Transparent else Color.White.copy(alpha = 0.5f)
-            )
-            .clickable { /* Lógica para seleccionar día */ }
+        modifier = modifier
+            .padding(2.dp)
+            .clickable(onClick = onClick)
+            .background(background, shape = CircleShape)
+            .then(if (border != null) Modifier.border(border, CircleShape) else Modifier),
+        contentAlignment = Alignment.Center
     ) {
         Text(
             text = day.toString(),
-            color = if (isCurrentDay) Color.White else Color.White.copy(alpha = 0.8f),
-            fontSize = Dimensions.responsiveSp(16f),
-            fontFamily = fuenteprincipal,
-            textAlign = TextAlign.Center
+            fontSize = 20.sp,            // número más grande
+            fontWeight = if (isCurrentDay) FontWeight.Bold else FontWeight.Medium,
+            color = if (isCurrentDay) Color.White else Color(0xFF000000)
         )
     }
+}
+
+data class DiaCalendar(
+    var dia : Int,
+    var turno : Int,
+    var dinero : Int,
+    var negocios : Int,
+    var ingresos : Int,
+    var gastos : Int
+)
+
+object Resumen{
+    var id : Long = 0
+    var fk_jugador : Long = idJugador
+    var numDia : Int = diaNum
+    var dinero : Int = EstadoTurno.dinero
+    var negocios : Int = Count.negocioCount
+    var ingresos : Int = EstadoTurno.ingresos
+    var gastos : Int = EstadoTurno.costes
+    var turno : Int = TurnoManager.turno
 }

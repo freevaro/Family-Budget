@@ -263,5 +263,30 @@ data class TiendaNegocio(
     @ColumnInfo(name = "fk_negocio") val fkNegocio: Long
 )
 
+@Entity(
+    tableName = "resumen_dia",
+    foreignKeys = [
+        ForeignKey(
+            entity = Jugador::class,
+            parentColumns = ["id"],
+            childColumns = ["fk_jugador"],
+            onDelete = CASCADE
+        )
+    ],
+    indices = [
+        Index("fk_jugador")
+    ]
+)
+data class ResumenDia(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @ColumnInfo(name = "fk_jugador") val fkJugador: Long,
+    val numDia: Int,
+    val dinero: Double,
+    val negocios: Int,
+    val ingresos: Double,
+    val gastos: Double,
+    val turno : Int
+)
+
 
 

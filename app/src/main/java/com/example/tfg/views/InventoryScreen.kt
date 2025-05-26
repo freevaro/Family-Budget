@@ -36,6 +36,9 @@ import com.example.tfg.viewmodel.InventarioComidaViewModel
 import com.example.tfg.viewmodel.InventarioNegocioViewModel
 import com.example.tfg.viewmodel.InventarioTarjetaViewModel
 import com.example.tfg.viewmodel.NegocioViewModel
+import com.example.tfg.views.Count.comidaCount
+import com.example.tfg.views.Count.negocioCount
+import com.example.tfg.views.Count.tarjetaCount
 import kotlinx.coroutines.flow.drop
 
 /**
@@ -54,6 +57,13 @@ import kotlinx.coroutines.flow.drop
  * @param musicEnabled Estado actual de la música.
  * @param onMusicToggle Callback para activar o desactivar la música.
  */
+
+object Count{
+    var comidaCount = 0
+    var negocioCount = 0
+    var tarjetaCount = 0
+}
+
 
 @Composable
 fun SettingsScreen(
@@ -109,9 +119,9 @@ fun SettingsScreen(
     }
 
     // Totales
-    val comidaCount  = comidaItems.size
-    val tarjetaCount = tarjetaItems.size
-    val negocioCount = inventoryItems.sumOf { it.quantity }
+    comidaCount  = comidaItems.size
+    tarjetaCount = tarjetaItems.size
+    negocioCount = inventoryItems.sumOf { it.quantity }
 
     Box(
         modifier = Modifier
