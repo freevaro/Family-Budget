@@ -142,6 +142,7 @@ fun CalendarScreen(
                             fontSize = 16.sp,
                             color = Color.White,
                             fontWeight = FontWeight.SemiBold,
+                            fontFamily = fuenteprincipal,
                             textAlign = TextAlign.Center
                         )
                     }
@@ -175,7 +176,7 @@ fun CalendarScreen(
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(Dimensions.heightPercentage(3f)))
 
 
             if (selectedDay == EstadoTurno.diaNum) {
@@ -389,6 +390,7 @@ fun CalendarDay(
             text = day.toString(),
             fontSize = 20.sp,            // número más grande
             fontWeight = if (isCurrentDay) FontWeight.Bold else FontWeight.Medium,
+            fontFamily = fuenteprincipal,
             color = if (isCurrentDay) Color.White else Color(0xFF000000)
         )
     }
