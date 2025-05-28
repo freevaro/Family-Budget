@@ -77,6 +77,7 @@ interface ComidaDao {
     @Insert suspend fun insert(c: Comida)
     @Update suspend fun update(c: Comida)
     @Delete suspend fun delete(c: Comida)
+    @Query("SELECT precio FROM comida WHERE nombre = :nombre") suspend fun getPrecioByName(nombre : String) : Int
 }
 
 @Dao
@@ -87,6 +88,20 @@ interface TarjetaDao {
     @Delete suspend fun delete(t: Tarjeta)
     @Query("SELECT * FROM tarjeta ORDER BY id ASC LIMIT 3")
     fun getFirst3(): LiveData<List<Tarjeta>>
+    /** Todas las tarjetas excepto las 3 primeras */
+    @Query("""
+      SELECT * 
+        FROM tarjeta 
+       WHERE id NOT IN (
+         SELECT id 
+           FROM tarjeta 
+          ORDER BY id ASC 
+          LIMIT 3
+       )
+    """)
+    suspend fun getExceptFirst3(): List<Tarjeta>
+    @Query("SELECT efecto_valor FROM tarjeta WHERE nombre = :nombre") suspend fun getPrecioByName(nombre : String) : Int
+
 }
 
 @Dao
@@ -99,6 +114,8 @@ interface NegocioDao {
     suspend fun getByCategoria(categoria: String): List<Negocio>
     @Query("SELECT * FROM negocio WHERE id = :id")
     suspend fun getById(id: Long): Negocio?
+    @Query("SELECT coste_tienda FROM negocio WHERE nombre = :nombre") suspend fun getPrecioByName(nombre : String) : Double
+
 }
 
 
@@ -162,12 +179,66 @@ interface InventarioComidaDao {
   """)
     suspend fun countAllByInventario(inventarioId: Long): List<ItemCount>
 
+    /**
+     * Resta 1 al contador de días (duracion) de cada comida
+     * y, si ese nuevo duracion coincide con un múltiplo exacto
+     * de la duracion base de la comida, reduce cantidad en 1.
+     */
+    @Query("""
+    UPDATE inventario_comida
+       SET 
+         duracion = duracion - 1,
+         cantidad = CASE
+           WHEN ( (duracion - 1) 
+                  % (SELECT duracion 
+                       FROM comida 
+                      WHERE comida.id = inventario_comida.fk_comida)
+                ) = 0 
+           THEN cantidad - 1
+           ELSE cantidad
+         END
+     WHERE fk_inventario IN (
+       SELECT id 
+         FROM inventario 
+        WHERE fk_partida = :partidaId
+     )
+       AND cantidad > 0
+  """)
+    suspend fun decrementarDuracionYCantidadEnPartida(partidaId: Long)
+
+    /**
+     * Borra todas las comidas de la partida cuya duración o cantidad ha llegado a cero
+     */
+    @Query("""
+      DELETE FROM inventario_comida
+       WHERE fk_inventario IN (
+         SELECT id 
+           FROM inventario 
+          WHERE fk_partida = :partidaId
+       )
+         AND (duracion <= 0 OR cantidad <= 0)
+    """)
+    suspend fun deleteExpiredInPartida(partidaId: Long)
 
 
     // JOIN entre inventario_negocio y negocio:
     @Transaction
     @Query("SELECT * FROM inventario_comida WHERE fk_inventario = :inventarioId")
     fun getConDetalle(inventarioId: Long): Flow<List<InventarioComidaWithComida>>
+
+    /** Devuelve el número de filas que coinciden (0 o más) */
+    @Query("""
+    SELECT COUNT(*) 
+      FROM inventario_comida ic
+           JOIN comida c
+             ON ic.fk_comida = c.id
+     WHERE ic.fk_inventario = :inventarioId
+       AND c.nombre         = :nombre
+  """)
+    suspend fun countByNombre(
+        inventarioId: Long,
+        nombre: String
+    ): Int
 
     @Query("SELECT cantidad FROM inventario_comida WHERE fk_comida = :fk_comida")
     suspend fun selectCantidad(fk_comida : Long)  : Int
@@ -237,6 +308,22 @@ interface InventarioTarjetaDao {
         fk_tarjeta: Long
     ): InventarioTarjeta?
 }
+
+
+@Dao
+interface JugadorEfectoDao {
+    @Query("SELECT * FROM jugador_efectos")
+    fun getAll(): LiveData<List<JugadorEfecto>>
+
+    @Query("SELECT * FROM jugador_efectos WHERE fk_jugador = :jugadorId")
+    fun getByJugador(jugadorId: Long): Flow<List<JugadorEfecto>>
+
+    @Insert suspend fun insert(je: JugadorEfecto): Long
+    @Update suspend fun update(je: JugadorEfecto)
+    @Delete suspend fun delete(je: JugadorEfecto)
+}
+
+
 
 data class InventarioNegocioWithNegocio(
     @Embedded val invNegocio: InventarioNegocio,

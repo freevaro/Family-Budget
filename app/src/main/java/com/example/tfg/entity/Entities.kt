@@ -52,7 +52,7 @@ data class Comida(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     var nombre: String,
     val duracion: Int,
-    val precio: Int,
+    var precio: Int,
     @ColumnInfo(name = "efecto_valor") val efecto: Int
 )
 
@@ -68,7 +68,7 @@ data class Tarjeta(
     @ColumnInfo(name = "tipo_tarjeta") val tipoTarjeta: String,
     @ColumnInfo(name = "dirigido_a") val dirigidoA: String,
     @ColumnInfo(name = "que_modifica") val queModifica: String,
-    @ColumnInfo(name = "efecto_valor") val efectoValor: Int,
+    @ColumnInfo(name = "efecto_valor") var efectoValor: Int,
     @ColumnInfo(name = "que_hace") val queHace: String
 )
 
@@ -80,7 +80,7 @@ data class Negocio(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val nombre: String,
     val ingresos: Double,
-    @ColumnInfo(name = "coste_tienda") val costeTienda: Double,
+    @ColumnInfo(name = "coste_tienda") var costeTienda: Double,
     @ColumnInfo(name = "coste_mantenimiento") val costeMantenimiento: Double,
     val categoria: String,
     val icon: String
@@ -175,6 +175,41 @@ data class InventarioComida(
     @ColumnInfo(name = "duracion") val duracion: Int,
     @ColumnInfo(name = "cantidad") val cantidad : Int
 )
+
+
+@Entity(
+    tableName = "jugador_efectos",
+    foreignKeys = [
+        ForeignKey(
+            entity = Jugador::class,
+            parentColumns = ["id"],
+            childColumns = ["fk_jugador"],
+            onDelete = CASCADE
+        ),
+        ForeignKey(
+            entity = Tarjeta::class,
+            parentColumns = ["id"],
+            childColumns = ["fk_tarjeta"],
+            onDelete = CASCADE
+        )
+    ],
+    indices = [
+        Index("fk_jugador"),
+        Index("fk_tarjeta")
+    ]
+)
+data class JugadorEfecto(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @ColumnInfo(name = "fk_jugador") val fkJugador: Long,
+    @ColumnInfo(name = "fk_tarjeta") val fkTarjeta: Long,
+    val tipo : String,
+    val campo_afectado : String,
+    val ingresos: Double,
+    val gastos: Double,
+    val cantidad: Int,
+    val duracion: Int
+)
+
 
 /**
  * Relación entre Inventario y Tarjeta con duración de efecto.

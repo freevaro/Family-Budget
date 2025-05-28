@@ -36,7 +36,9 @@ import kotlinx.coroutines.launch
         PartidaJugador::class,
         PartidaDia::class,
         TiendaNegocio::class,
-        ResumenDia::class
+        ResumenDia::class,
+        JugadorEfecto::class
+
     ],
     version = 1,
     exportSchema = false
@@ -121,6 +123,9 @@ abstract class AppDatabase : RoomDatabase() {
 
 
     abstract fun resumenDiaDao() : ResumenDiaDao
+
+
+    abstract fun jugadorEfectoDao(): JugadorEfectoDao
 
 
 

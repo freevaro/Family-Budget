@@ -27,22 +27,28 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tfg.R
 import com.example.tfg.entity.Comida
 import com.example.tfg.entity.Negocio
 import com.example.tfg.entity.Tarjeta
+import com.example.tfg.viewmodel.ComidaViewModel
 import com.example.tfg.viewmodel.InventarioComidaViewModel
 import com.example.tfg.viewmodel.InventarioNegocioViewModel
 import com.example.tfg.viewmodel.InventarioTarjetaViewModel
 import com.example.tfg.viewmodel.JugadorViewModel
+import com.example.tfg.viewmodel.NegocioViewModel
 import com.example.tfg.viewmodel.ShopViewModel
+import com.example.tfg.viewmodel.TarjetaViewModel
 import com.example.tfg.viewmodel.TurnoManager
 import com.example.tfg.viewmodel.TurnoManager.playerId
 import com.example.tfg.viewmodel.TurnoManager.diaId
 import com.example.tfg.viewmodel.TurnoManager.turno
 import com.example.tfg.viewmodel.TurnoManager.ultimoTurnoGenerado
+import kotlinx.coroutines.launch
 
 
 /**
@@ -66,6 +72,12 @@ fun ShopScreen(
     onNavigateToShop: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
 ) {
+    val activity = LocalContext.current as ComponentActivity
+    val shopVM: ShopViewModel = viewModel(
+        viewModelStoreOwner = activity
+    )
+    val descuento by shopVM.descuentoComida.observeAsState(0)
+
     val primaryGreen = Color(0xFF9CCD5C)
     val darkGreen = Color(0xFF6B9A2F)
     val lightGreen = Color(0xFFB5E878)
@@ -81,10 +93,8 @@ fun ShopScreen(
 
 
 
-    val activity = LocalContext.current as ComponentActivity
-    val shopVM: ShopViewModel = viewModel(
-        viewModelStoreOwner = activity
-    )
+
+
 
     // Guardamos el último turno para el que ya generamos la tienda
 
@@ -116,9 +126,9 @@ fun ShopScreen(
     val tarjetasBonus = primerasTarjetas.map { tarjeta ->
         ProductTarjeta(
             name    = tarjeta.nombre,
-            price   = tarjeta.efectoValor,
+            price   = shopVM.aplicarDescuento(tarjeta.efectoValor.toDouble(),descuento).toInt(),
             icon    = Icons.Default.CardGiftcard,
-            onClick = { selectedTarjeta = tarjeta }       // <-- y aquí
+            onClick = { selectedTarjeta = tarjeta }
         )
     }
 
@@ -144,16 +154,24 @@ fun ShopScreen(
     val invComidaVM: InventarioComidaViewModel    = viewModel()   // nuevo
     val invTarjetaVM: InventarioTarjetaViewModel  = viewModel()   // nuevo
 
-    val primerasComidas = remember(comidas) { comidas.take(3) }
+    val primerasComidas = comidas.take(3)
     val tarjetasComida = primerasComidas.map { comida ->
-        // Elige el icono según el nombre, como antes
+        val precioConDesc = shopVM.aplicarDescuento(
+            comida.precio.toDouble(), descuento
+        ).toInt()
+
         val icon = when (comida.nombre) {
             "Comida Diaria"  -> Icons.Default.Fastfood
             "Comida Semanal" -> Icons.Default.Restaurant
             "Comida Premium" -> Icons.Default.RestaurantMenu
             else              -> Icons.Default.BuildCircle
         }
-        ProductComida(comida.nombre, comida.precio, icon, onClick = { selectedComida = comida })
+        ProductComida(
+            name    = comida.nombre,
+            price   = precioConDesc,
+            icon    = icon,
+            onClick = { selectedComida = comida }
+        )
     }
 
 
@@ -201,6 +219,19 @@ fun ShopScreen(
                 )
             }
 
+            if (descuento > 0) {
+                Text(
+                    text = "¡Descuento por comida: -$descuento% en todos los precios!",
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color.Red.copy(alpha = 0.7f))
+                        .padding(6.dp),
+                    textAlign = TextAlign.Center
+                )
+            }
+
             // Sección Negocios
             CategorySection(
                 title = "NEGOCIOS",
@@ -215,7 +246,7 @@ fun ShopScreen(
                 products = negociosBajo.map { negocio ->
                     Product(
                         name = negocio.nombre,
-                        price = negocio.costeTienda,
+                        price = shopVM.aplicarDescuento(negocio.costeTienda,descuento),
                         icon  = iconFromString(negocio.icon),
                         onClick = { selectedNegocio = negocio }
                     )
@@ -232,7 +263,7 @@ fun ShopScreen(
                 products = negociosMedio.map { negocio ->
                     Product(
                         name = negocio.nombre,
-                        price = negocio.costeTienda,
+                        price = shopVM.aplicarDescuento(negocio.costeTienda,descuento),
                         icon  = iconFromString(negocio.icon),
                         onClick = { selectedNegocio = negocio }
                     )
@@ -249,7 +280,7 @@ fun ShopScreen(
                 products = negociosAlto.map { negocio ->
                     Product(
                         name = negocio.nombre,
-                        price = negocio.costeTienda,
+                        price = shopVM.aplicarDescuento(negocio.costeTienda,descuento),
                         icon  = iconFromString(negocio.icon),
                         onClick = { selectedNegocio = negocio }
                     )
@@ -297,6 +328,7 @@ fun ShopScreen(
     }
 // Diálogo con detalles del negocio
     selectedNegocio?.let { negocio ->
+
         AlertDialog(
             onDismissRequest = { selectedNegocio = null },
             containerColor = lightGreen.copy(alpha = 0.9f),
@@ -375,8 +407,10 @@ fun ShopScreen(
                 }
             },
             confirmButton = {
+                val negocioVM : NegocioViewModel = viewModel()
                 Button(
                     onClick = {
+                        negocio.costeTienda = shopVM.aplicarDescuento(negocio.costeTienda,descuento)
                         invNegVM.comprarNegocio(negocio)  // <-- insert/update en inventario_negocio
                         selectedNegocio = null},
                     colors = ButtonDefaults.buttonColors(
@@ -475,10 +509,28 @@ fun ShopScreen(
                 }
             },
             confirmButton = {
+                val comidaVM : ComidaViewModel = viewModel()
+                val uiScope = rememberCoroutineScope()
                 Button(
                     onClick = {
-                        invComidaVM.comprarComida(comida)
-                        selectedComida = null
+                        // 1) Lanzamos una coroutine para no bloquear la UI
+                        uiScope.launch {
+                            // 2) Obtenemos el inventario actual
+                            val inventario = shopVM.getInventarioSync(playerId)
+                            // 3) Contamos si ya existe esa comida
+                            val count = shopVM.countComidaEnInventario(inventario.id, comida.nombre)
+                            // 4) Ahora compramos
+                            val precioDescontado = shopVM.aplicarDescuento(
+                                comida.precio.toDouble(), descuento
+                            ).toInt()
+                            invComidaVM.comprarComida(comida, precioDescontado)
+
+                            // 5) Solo si era 0 (no existía), actualizamos descuento
+                            if (count == 0) {
+                                shopVM.actualizarDescuento(playerId)
+                            }
+                        }
+                            selectedComida = null
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = darkGreen,
@@ -554,8 +606,10 @@ fun ShopScreen(
                 }
             },
             confirmButton = {
+                val tarjetaVM : TarjetaViewModel = viewModel()
                 Button(
                     onClick = {
+                        tarjeta.efectoValor = shopVM.aplicarDescuento(tarjeta.efectoValor.toDouble(),descuento).toInt()
                         invTarjetaVM.comprarTarjeta(tarjeta)
                         selectedTarjeta = null
                     },
@@ -866,6 +920,9 @@ fun ProductCardComida(
     lightGreen: Color,
     modifier: Modifier = Modifier
 ) {
+    val shopVM : ShopViewModel = viewModel()
+    val descuento by shopVM.descuentoComida.observeAsState(0)
+
     Card(
         modifier = modifier
             .padding(horizontal = Dimensions.widthPercentage(1.25f))
@@ -919,7 +976,7 @@ fun ProductCardComida(
                 )
 
                 Text(
-                    text = "${'$'}${product.price}",
+                    text = "${'$'}${shopVM.aplicarDescuento(product.price.toDouble(),descuento)}",
                     fontFamily = fuenteprincipal,
                     fontSize = Dimensions.responsiveSp(16f),
                     fontWeight = FontWeight.Bold,
@@ -939,6 +996,9 @@ fun ProductCardTarjeta(
     lightGreen: Color,
     modifier: Modifier = Modifier
 ) {
+    val shopVM : ShopViewModel = viewModel()
+    val descuento by shopVM.descuentoComida.observeAsState(0)
+
     Card(
         modifier = modifier
             .padding(horizontal = Dimensions.widthPercentage(1.25f))

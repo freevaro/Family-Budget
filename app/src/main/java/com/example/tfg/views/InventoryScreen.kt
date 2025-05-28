@@ -32,14 +32,18 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.tfg.R
+import com.example.tfg.dao.InventarioComidaWithComida
 import com.example.tfg.dao.InventarioNegocioWithNegocio
+import com.example.tfg.dao.InventarioTarjetaWithTarjeta
 import com.example.tfg.entity.Comida
 import com.example.tfg.entity.Tarjeta
 import com.example.tfg.viewmodel.ComidaViewModel
+import com.example.tfg.viewmodel.EstadoTurno
 import com.example.tfg.viewmodel.EstadoTurno.inventarioId
 import com.example.tfg.viewmodel.InventarioComidaViewModel
 import com.example.tfg.viewmodel.InventarioNegocioViewModel
 import com.example.tfg.viewmodel.InventarioTarjetaViewModel
+import com.example.tfg.viewmodel.JugadorEfectoViewModel
 import com.example.tfg.viewmodel.NegocioViewModel
 import com.example.tfg.viewmodel.TarjetaViewModel
 import com.example.tfg.views.Count.comidaCount
@@ -88,18 +92,26 @@ fun SettingsScreen(
     val lightGreen   = Color(0xFFB5E878)
     val fuente       = FontFamily(Font(R.font.barriecito_regular))
     var selectedNegocio by remember { mutableStateOf<InventarioNegocioWithNegocio?>(null) }
-    var selectedComida by remember { mutableStateOf<Pair<Comida, Int>?>(null) }
-    var selectedTarjeta by remember { mutableStateOf<Pair<Tarjeta, Int>?>(null) }
+    var selectedComida by remember { mutableStateOf<InventarioComidaWithComida?>(null) }
+    var selectedTarjeta by remember { mutableStateOf<InventarioTarjetaWithTarjeta?>(null) }
+
+
 
     // ViewModels
     val invNegVM: InventarioNegocioViewModel      = viewModel()
     val invComidaVM: InventarioComidaViewModel    = viewModel()
     val invTarjetaVM: InventarioTarjetaViewModel  = viewModel()
+    val jugadorEfectoVM : JugadorEfectoViewModel    = viewModel()
     val negocioVM: NegocioViewModel           = viewModel()
     val comidaVM: InventarioComidaViewModel   = viewModel()
     val tarjetaVM: InventarioTarjetaViewModel = viewModel()
     val comidaEntityVM: ComidaViewModel           = viewModel()
     val tarjetaEntityVM: TarjetaViewModel         = viewModel()
+
+    val currentPlayerId = EstadoTurno.idJugador
+    val efectosPorJugador by jugadorEfectoVM
+        .efectosPorJugador(currentPlayerId)  // ✔️ ahora sí filtramos por jugador
+        .collectAsState(initial = emptyList())
 
 
 
@@ -305,8 +317,9 @@ fun SettingsScreen(
                             else -> Icons.Default.Fastfood
                         }
                         val item = InventoryItem(withCom.comida.nombre, withCom.invComida.cantidad, icon, "Comida")
-                        InventoryItemCardNegocio(item) { selectedComida = withCom.comida to withCom.invComida.cantidad }
-                    }
+                        InventoryItemCardNegocio(item) {
+                            selectedComida = withCom  // guardamos el withCom completo
+                        }                    }
                 }
             }
 
@@ -340,7 +353,9 @@ fun SettingsScreen(
                             else -> Icons.Default.CardGiftcard
                         }
                         val item = InventoryItem(withTar.tarjeta.nombre, withTar.invTarjeta.cantidad, icon, "Tarjeta")
-                        InventoryItemCardNegocio(item) { selectedTarjeta = withTar.tarjeta to withTar.invTarjeta.cantidad }
+                        InventoryItemCardNegocio(item) {
+                            selectedTarjeta = withTar  // guardamos el withTar completo
+                        }
                     }
                 }
             }
@@ -456,7 +471,12 @@ fun SettingsScreen(
                 }
             )
         }
-        selectedComida?.let { (comida, cantidad) ->
+        selectedComida?.let { withCom ->
+
+            val comidaEntity = withCom.comida
+            val invCom       = withCom.invComida
+
+
             AlertDialog(
                 onDismissRequest = { selectedComida = null },
                 containerColor   = lightGreen.copy(alpha = 0.9f),
@@ -476,7 +496,7 @@ fun SettingsScreen(
                                 .clip(CircleShape)
                                 .background(darkGreen.copy(alpha = 0.7f))
                         ) {
-                            val icon = when (comida.nombre) {
+                            val icon = when (withCom.comida.nombre) {
                                 "Comida Diaria"  -> Icons.Default.Fastfood
                                 "Comida Semanal" -> Icons.Default.Restaurant
                                 "Comida Premium" -> Icons.Default.RestaurantMenu
@@ -484,14 +504,14 @@ fun SettingsScreen(
                             }
                             Icon(
                                 imageVector = icon,
-                                contentDescription = comida.nombre,
+                                contentDescription = withCom.comida.nombre,
                                 tint = Color.White,
                                 modifier = Modifier.size(24.dp)
                             )
                         }
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            text       = comida.nombre,
+                            text       = withCom.comida.nombre,
                             fontFamily = fuente,
                             fontSize   = 24.sp,
                             fontWeight = FontWeight.Bold
@@ -507,28 +527,28 @@ fun SettingsScreen(
                         DetalleComidaItem(
                             icon   = Icons.Default.Timer,
                             texto  = "Duración:",
-                            valor  = "${comida.duracion} días",
+                            valor  = "${withCom.comida.duracion} días",
                             fuentePrincipal = fuente
                         )
                         Spacer(Modifier.height(8.dp))
                         DetalleComidaItem(
                             icon   = Icons.Default.AttachMoney,
                             texto  = "Precio:",
-                            valor  = "$${comida.precio}",
+                            valor  = "$${withCom.comida.precio}",
                             fuentePrincipal = fuente
                         )
                         Spacer(Modifier.height(8.dp))
                         DetalleComidaItem(
                             icon   = Icons.Default.TrendingUp,
                             texto  = "Efecto:",
-                            valor  = "+${comida.efecto}",
+                            valor  = "+${withCom.comida.efecto}",
                             fuentePrincipal = fuente
                         )
                         Spacer(Modifier.height(8.dp))
                         DetalleComidaItem(
-                            icon   = Icons.Default.Numbers,
-                            texto  = "Cantidad:",
-                            valor  = cantidad.toString(),
+                            icon   = Icons.Default.Timer,
+                            texto  = "Duración restante:",
+                            valor  = "${invCom.duracion} días",
                             fuentePrincipal = fuente
                         )
                     }
@@ -558,7 +578,15 @@ fun SettingsScreen(
         // ——————————
 // Modal Detalle de Tarjeta Bonus
 // ——————————
-        selectedTarjeta?.let { (tarjeta, cantidad) ->
+        selectedTarjeta?.let { withTar ->
+
+            val tarjetaEntity = withTar.tarjeta
+            val cantidad      = withTar.invTarjeta.cantidad
+            // Buscamos el efecto que tenga esta tarjeta y el jugador actual:
+            val efecto = efectosPorJugador
+                .firstOrNull { it.fkTarjeta == tarjetaEntity.id }
+            val durRestante = efecto?.duracion ?: 0
+
             AlertDialog(
                 onDismissRequest = { selectedTarjeta = null },
                 containerColor   = lightGreen.copy(alpha = 0.9f),
@@ -579,14 +607,14 @@ fun SettingsScreen(
                         ) {
                             Icon(
                                 imageVector    = Icons.Default.CardGiftcard,
-                                contentDescription = tarjeta.nombre,
+                                contentDescription = withTar.tarjeta.nombre,
                                 tint           = Color.White,
                                 modifier       = Modifier.size(24.dp)
                             )
                         }
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            text       = tarjeta.nombre,
+                            text       = withTar.tarjeta.nombre,
                             fontFamily = fuente,
                             fontSize   = 24.sp,
                             fontWeight = FontWeight.Bold
@@ -594,7 +622,7 @@ fun SettingsScreen(
                     }
                 },
                 text = {
-                    if (tarjeta.nombre == "Tarjeta Negocio" || tarjeta.nombre == "Tarjeta Dinero" || tarjeta.nombre == "Tarjeta Aleatoria"){
+                    if (withTar.tarjeta.nombre == "Tarjeta Negocio" || withTar.tarjeta.nombre == "Tarjeta Dinero" || withTar.tarjeta.nombre == "Tarjeta Aleatoria"){
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -603,7 +631,7 @@ fun SettingsScreen(
                             DetalleTarjetaItem(
                                 icon   = Icons.Default.Info,
                                 texto  = "Efecto:",
-                                valor  = tarjeta.nombreEfecto,
+                                valor  = tarjetaEntity.nombreEfecto,
                                 fuentePrincipal = fuente
                             )
                             Spacer(Modifier.height(8.dp))
@@ -615,46 +643,107 @@ fun SettingsScreen(
                             )
 
                         }
-
+                    }else{
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                        ) {
+                            DetalleTarjetaItem(
+                                icon   = Icons.Default.Info,
+                                texto  = "Efecto:",
+                                valor  = withTar.tarjeta.nombreEfecto,
+                                fuentePrincipal = fuente
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            DetalleTarjetaItem(
+                                icon   = Icons.Default.Build,
+                                texto  = "Tipo:",
+                                valor  = withTar.tarjeta.tipoTarjeta,
+                                fuentePrincipal = fuente
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            DetalleTarjetaItem(
+                                icon   = Icons.Default.Person,
+                                texto  = "Dirigido a:",
+                                valor  = withTar.tarjeta.dirigidoA,
+                                fuentePrincipal = fuente
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            DetalleTarjetaItem(
+                                icon   = Icons.Default.TrendingUp,
+                                texto  = "Valor efecto:",
+                                valor  = "+${withTar.tarjeta.efectoValor}",
+                                fuentePrincipal = fuente
+                            )
+                            Spacer(Modifier.height(8.dp))
+                            DetalleTarjetaItem(
+                                icon   = Icons.Default.Timer,
+                                texto  = "Duración restante:",
+                                valor  = "$durRestante turnos",           // mostramos la duración real
+                                fuentePrincipal = fuente
+                            )
+                        }
                     }
 
                 },
                 confirmButton = {
-                    Button(
-                        onClick  = { selectedTarjeta = null },
-                        colors   = ButtonDefaults.buttonColors(
-                            containerColor = darkGreen,
-                            contentColor   = Color.White
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                    ) {
-                        Text(
-                            "CERRAR",
-                            fontFamily = fuente,
-                            fontSize   = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Button(
-                        onClick = { selectedNegocio = null },
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = darkGreen,
-                            contentColor = Color.White
-                        ),
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp)
-                    ) {
-                        Text(
-                            "CANJEAR",
-                            fontFamily = fuente,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
+                    if (withTar.tarjeta.nombre == "Tarjeta Negocio" || withTar.tarjeta.nombre == "Tarjeta Dinero" || withTar.tarjeta.nombre == "Tarjeta Aleatoria") {
+                            Button(
+                                onClick  = { selectedTarjeta = null },
+                                colors   = ButtonDefaults.buttonColors(
+                                    containerColor = darkGreen,
+                                    contentColor   = Color.White
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                            ) {
+                                Text(
+                                    "CERRAR",
+                                    fontFamily = fuente,
+                                    fontSize   = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                            Button(
+                                onClick = {
+                                    jugadorEfectoVM.reemplazarTarjeta(withTar.tarjeta)
+                                    selectedTarjeta = null},
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = darkGreen,
+                                    contentColor = Color.White
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                            ) {
+                                Text(
+                                    "CANJEAR",
+                                    fontFamily = fuente,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        } else {
+                            Button(
+                                onClick  = { selectedTarjeta = null },
+                                colors   = ButtonDefaults.buttonColors(
+                                    containerColor = darkGreen,
+                                    contentColor   = Color.White
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp)
+                            ) {
+                                Text(
+                                    "CERRAR",
+                                    fontFamily = fuente,
+                                    fontSize   = 16.sp,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+                        }
                 }
             )
         }

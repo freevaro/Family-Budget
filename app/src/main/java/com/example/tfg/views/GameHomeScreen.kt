@@ -39,6 +39,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,6 +67,7 @@ import com.example.tfg.viewmodel.ShopViewModel
 import com.example.tfg.viewmodel.TurnoManager
 import com.example.tfg.viewmodel.ResumenDiaViewModel
 import com.example.tfg.viewmodel.TurnoManager.playerId
+import kotlinx.coroutines.launch
 
 /**
  * Pantalla principal del juego donde se muestra la información del jugador actual,
@@ -116,6 +118,8 @@ fun GameHomeScreen(
     val jugadoresPPViewModel : PartidaJugadorViewModel = viewModel()
     val viewModel: PositionsViewModel = viewModel()
     val jugadores by viewModel.playersInGame.observeAsState(emptyList())
+    val uiScope = rememberCoroutineScope()
+
 
     val shopVM: ShopViewModel = viewModel()
 
@@ -284,7 +288,9 @@ fun GameHomeScreen(
             Button(
                 onClick = {
                     resumenDiaVM.saveResumenTurnoActual()
-                    TurnoManager.next()
+                    uiScope.launch {
+                        TurnoManager.next()
+                    }
                     shopVM.generarTiendaNueva(idJugador, diaId)
                 },
                 modifier = Modifier
