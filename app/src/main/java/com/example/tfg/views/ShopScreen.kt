@@ -529,8 +529,8 @@ fun ShopScreen(
                             if (count == 0) {
                                 shopVM.actualizarDescuento(playerId)
                             }
-                        }
                             selectedComida = null
+                        }
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = darkGreen,
