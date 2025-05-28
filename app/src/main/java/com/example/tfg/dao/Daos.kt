@@ -69,6 +69,9 @@ interface JugadorDao {
      WHERE pj.fk_partida = :partidaId
   """)
     suspend fun getPlayersForPartida(partidaId: Long): MutableList<Jugador>
+    // Primero, en JugadorDao (si no existe), para poder cargar un jugador por ID:
+    @Query("SELECT * FROM jugador WHERE id = :id")
+    suspend fun getById(id: Long): Jugador
 }
 
 @Dao
@@ -276,8 +279,10 @@ interface InventarioTarjetaDao {
     @Query("SELECT * FROM inventario_tarjeta WHERE fk_inventario = :inventarioId")
     fun getByInventario(inventarioId: Long): LiveData<List<InventarioTarjeta>>
 
-    @Query("SELECT id, fk_inventario, fk_tarjeta, cantidad FROM inventario_tarjeta")
+    @Query("SELECT id, fk_inventario, fk_tarjeta, cantidad, duracion FROM inventario_tarjeta")
     fun getAll(): Flow<List<InventarioTarjeta>>
+
+
 
     @Query("""
     SELECT fk_tarjeta AS itemId, COUNT(*) AS count
@@ -307,6 +312,53 @@ interface InventarioTarjetaDao {
         inventarioId: Long,
         fk_tarjeta: Long
     ): InventarioTarjeta?
+
+    /**
+     * Resta 1 al contador de días (duracion) de cada tarjeta
+     * y, si llega a cero, reduce cantidad en 1.
+     */
+    @Query("""
+    UPDATE inventario_tarjeta
+       SET
+         duracion = duracion - 1,
+         cantidad = CASE
+           WHEN (duracion - 1) = 0 THEN cantidad - 1
+           ELSE cantidad
+         END
+     WHERE fk_inventario IN (
+       SELECT id
+         FROM inventario
+        WHERE fk_partida = :partidaId
+     )
+       AND duracion > 0
+  """)
+    suspend fun decrementarDuracionYCantidadEnPartida(partidaId: Long)
+
+    /**
+     * Elimina tarjetas caducadas (duracion o cantidad <= 0),
+     * excepto las de tipo fijo (IDs 1,2,3) y las de efecto Dinero.
+     */
+    @Query("""
+    DELETE FROM inventario_tarjeta
+     WHERE fk_inventario IN (
+       SELECT id
+         FROM inventario
+        WHERE fk_partida = :partidaId
+     )
+       AND (duracion <= 0 OR cantidad <= 0)
+       AND fk_tarjeta NOT IN (1,2,3)
+       AND fk_tarjeta NOT IN (
+         SELECT id
+           FROM tarjeta
+          WHERE tipo_efecto = 'Dinero'
+       )
+  """)
+    suspend fun deleteExpiredInPartida(partidaId: Long)
+
+    /** Devuelve la duración de un inventario_tarjeta concreto */
+    @Query("SELECT duracion FROM inventario_tarjeta WHERE id = :inventarioTarjetaId")
+    fun getDuracionById(inventarioTarjetaId: Long): Flow<Int?>
+
 }
 
 
@@ -318,7 +370,27 @@ interface JugadorEfectoDao {
     @Query("SELECT * FROM jugador_efectos WHERE fk_jugador = :jugadorId")
     fun getByJugador(jugadorId: Long): Flow<List<JugadorEfecto>>
 
-    @Insert suspend fun insert(je: JugadorEfecto): Long
+    /**
+     * Resta 1 a la duración de todos los efectos activos de todos los jugadores.
+     */
+    @Query("""
+    UPDATE jugador_efectos
+       SET duracion = duracion - 1
+     WHERE duracion > 0
+  """)
+    suspend fun decrementarDuracionDeTodosEfectos()
+
+    /**
+     * Elimina todos los efectos cuya duración haya llegado a cero.
+     */
+    @Query("""
+    DELETE FROM jugador_efectos
+     WHERE duracion <= 0
+  """)
+    suspend fun eliminarEfectosExpirados()
+
+
+@Insert suspend fun insert(je: JugadorEfecto): Long
     @Update suspend fun update(je: JugadorEfecto)
     @Delete suspend fun delete(je: JugadorEfecto)
 }

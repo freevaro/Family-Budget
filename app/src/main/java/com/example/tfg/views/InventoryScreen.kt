@@ -1,5 +1,6 @@
 package com.example.tfg.views
 
+import android.annotation.SuppressLint
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -46,10 +47,12 @@ import com.example.tfg.viewmodel.InventarioTarjetaViewModel
 import com.example.tfg.viewmodel.JugadorEfectoViewModel
 import com.example.tfg.viewmodel.NegocioViewModel
 import com.example.tfg.viewmodel.TarjetaViewModel
+import com.example.tfg.viewmodel.TurnoManager.aplicarEfectosNegocioActivos
 import com.example.tfg.views.Count.comidaCount
 import com.example.tfg.views.Count.negocioCount
 import com.example.tfg.views.Count.tarjetaCount
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.launch
 
 /**
  * Pantalla de configuración e inventario del juego.
@@ -75,6 +78,7 @@ object Count{
 }
 
 
+@SuppressLint("FlowOperatorInvokedInComposition")
 @Composable
 fun SettingsScreen(
     onNavigateToHome: () -> Unit = {},
@@ -111,6 +115,7 @@ fun SettingsScreen(
     val currentPlayerId = EstadoTurno.idJugador
     val efectosPorJugador by jugadorEfectoVM
         .efectosPorJugador(currentPlayerId)  // ✔️ ahora sí filtramos por jugador
+        .drop(1)   // descartamos el emptyList() inicial
         .collectAsState(initial = emptyList())
 
 
@@ -583,9 +588,14 @@ fun SettingsScreen(
             val tarjetaEntity = withTar.tarjeta
             val cantidad      = withTar.invTarjeta.cantidad
             // Buscamos el efecto que tenga esta tarjeta y el jugador actual:
-            val efecto = efectosPorJugador
-                .firstOrNull { it.fkTarjeta == tarjetaEntity.id }
-            val durRestante = efecto?.duracion ?: 0
+// DESPUÉS: filtramos todos los efectos de esa tarjeta y cogemos el que tenga la máxima duración
+            val efectosMismaTarjeta = efectosPorJugador
+                .filter { it.fkTarjeta == tarjetaEntity.id }
+            // 1) Recoger la duración
+            val duracion by remember(withTar.invTarjeta.id) {
+                invTarjetaVM
+                    .duracionInventarioTarjeta(withTar.invTarjeta.id)
+            }.collectAsState(initial = 0)
 
             AlertDialog(
                 onDismissRequest = { selectedTarjeta = null },
@@ -649,17 +659,17 @@ fun SettingsScreen(
                                 .fillMaxWidth()
                                 .padding(8.dp)
                         ) {
-                            DetalleTarjetaItem(
-                                icon   = Icons.Default.Info,
-                                texto  = "Efecto:",
-                                valor  = withTar.tarjeta.nombreEfecto,
-                                fuentePrincipal = fuente
-                            )
                             Spacer(Modifier.height(8.dp))
+                            var tipo = ""
+                            if (withTar.tarjeta.tipoTarjeta == "negocio") {
+                                tipo = "Negocio"
+                            }else{
+                                tipo = "Dinero"
+                            }
                             DetalleTarjetaItem(
                                 icon   = Icons.Default.Build,
                                 texto  = "Tipo:",
-                                valor  = withTar.tarjeta.tipoTarjeta,
+                                valor  = tipo,
                                 fuentePrincipal = fuente
                             )
                             Spacer(Modifier.height(8.dp))
@@ -670,17 +680,63 @@ fun SettingsScreen(
                                 fuentePrincipal = fuente
                             )
                             Spacer(Modifier.height(8.dp))
-                            DetalleTarjetaItem(
-                                icon   = Icons.Default.TrendingUp,
-                                texto  = "Valor efecto:",
-                                valor  = "+${withTar.tarjeta.efectoValor}",
-                                fuentePrincipal = fuente
-                            )
+                            var afectado = ""
+                            if (withTar.tarjeta.queModifica == "ingresos"){
+                                afectado = "Ingresos:"
+                            }else{
+                                afectado = "Costes Diarios:"
+                            }
+                            if (withTar.tarjeta.tipoEfecto == "Positivo" && afectado == "Ingresos:"){
+                                DetalleTarjetaItem(
+                                    icon   = Icons.Default.TrendingUp,
+                                    texto  = afectado,
+                                    valor  = "+${withTar.tarjeta.efectoValor}%",
+                                    fuentePrincipal = fuente
+                                )
+                            }else if(withTar.tarjeta.tipoEfecto == "Negativo" && afectado == "Ingresos:"){
+                                DetalleTarjetaItem(
+                                    icon   = Icons.Default.TrendingUp,
+                                    texto  = afectado,
+                                    valor  = "-${withTar.tarjeta.efectoValor}%",
+                                    fuentePrincipal = fuente
+                                )
+                            }else if (withTar.tarjeta.tipoEfecto == "Positivo" && afectado == "Costes Diarios:"){
+                                DetalleTarjetaItem(
+                                    icon   = Icons.Default.TrendingUp,
+                                    texto  = afectado,
+                                    valor  = "-${withTar.tarjeta.efectoValor}%",
+                                    fuentePrincipal = fuente
+                                )
+                            }else if(withTar.tarjeta.tipoEfecto == "Negativo" && afectado == "Costes Diarios:"){
+                                DetalleTarjetaItem(
+                                    icon   = Icons.Default.TrendingUp,
+                                    texto  = afectado,
+                                    valor  = "+${withTar.tarjeta.efectoValor}%",
+                                    fuentePrincipal = fuente
+                                )
+                            }
+                            if(tipo == "Dinero" && withTar.tarjeta.tipoEfecto == "Positivo") {
+                                Spacer(Modifier.height(8.dp))
+                                DetalleTarjetaItem(
+                                    icon = Icons.Default.Timer,
+                                    texto = "Duración restante:",
+                                    valor  = "+$${withTar.tarjeta.efectoValor}",
+                                    fuentePrincipal = fuente
+                                )
+                            }else if (tipo == "Dinero" && withTar.tarjeta.tipoEfecto == "Negativo"){
+                                Spacer(Modifier.height(8.dp))
+                                DetalleTarjetaItem(
+                                    icon   = Icons.Default.TrendingUp,
+                                    texto  = afectado,
+                                    valor  = "-$${withTar.tarjeta.efectoValor}",
+                                    fuentePrincipal = fuente
+                                )
+                            }
                             Spacer(Modifier.height(8.dp))
                             DetalleTarjetaItem(
                                 icon   = Icons.Default.Timer,
                                 texto  = "Duración restante:",
-                                valor  = "$durRestante turnos",           // mostramos la duración real
+                                valor  = "$duracion turnos",           // mostramos la duración real
                                 fuentePrincipal = fuente
                             )
                         }
@@ -688,6 +744,7 @@ fun SettingsScreen(
 
                 },
                 confirmButton = {
+                    val uiScope = rememberCoroutineScope()
                     if (withTar.tarjeta.nombre == "Tarjeta Negocio" || withTar.tarjeta.nombre == "Tarjeta Dinero" || withTar.tarjeta.nombre == "Tarjeta Aleatoria") {
                             Button(
                                 onClick  = { selectedTarjeta = null },
@@ -706,26 +763,30 @@ fun SettingsScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                             }
-                            Button(
-                                onClick = {
+                        Button(
+                            onClick = {
+                                uiScope.launch{
                                     jugadorEfectoVM.reemplazarTarjeta(withTar.tarjeta)
-                                    selectedTarjeta = null},
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = darkGreen,
-                                    contentColor = Color.White
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                            ) {
-                                Text(
-                                    "CANJEAR",
-                                    fontFamily = fuente,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-                        } else {
+                                    aplicarEfectosNegocioActivos()
+                                    selectedTarjeta = null
+                                }
+                                      },
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = darkGreen,
+                                contentColor = Color.White
+                            ),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp)
+                        ) {
+                            Text(
+                                "CANJEAR",
+                                fontFamily = fuente,
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    } else {
                             Button(
                                 onClick  = { selectedTarjeta = null },
                                 colors   = ButtonDefaults.buttonColors(
@@ -909,3 +970,7 @@ fun EmptySectionMessage(
         }
     }
 }
+
+
+
+

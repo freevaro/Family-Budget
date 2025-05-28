@@ -226,7 +226,8 @@ data class InventarioTarjeta(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     @ColumnInfo(name = "fk_inventario") val fkInventario: Long,
     @ColumnInfo(name = "fk_tarjeta") val fkTarjeta: Long,
-    val cantidad : Int
+    val cantidad : Int,
+    val duracion : Int
 )
 
 /**

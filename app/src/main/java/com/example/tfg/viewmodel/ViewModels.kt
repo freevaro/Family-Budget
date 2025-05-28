@@ -15,7 +15,9 @@ import com.example.tfg.dao.ComidaDao
 import com.example.tfg.dao.InventarioComidaDao
 import com.example.tfg.dao.InventarioComidaWithComida
 import com.example.tfg.dao.InventarioNegocioWithNegocio
+import com.example.tfg.dao.InventarioTarjetaDao
 import com.example.tfg.dao.InventarioTarjetaWithTarjeta
+import com.example.tfg.dao.JugadorEfectoDao
 import com.example.tfg.dao.NegocioDao
 import com.example.tfg.dao.TarjetaDao
 import com.example.tfg.entity.*
@@ -23,13 +25,18 @@ import com.example.tfg.viewmodel.EstadoTurno.dinero
 import com.example.tfg.viewmodel.EstadoTurno.idJugador
 import com.example.tfg.viewmodel.PartidaDatos.listaJugadores
 import com.example.tfg.viewmodel.PartidaDatos.partidaId
+import com.example.tfg.viewmodel.TurnoManager.applyEffectTo
 import com.example.tfg.viewmodel.TurnoManager.players
 import com.example.tfg.views.Resumen
 import com.example.tfg.views.Resumen.numDia
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -81,6 +88,9 @@ object TurnoManager {
     private var diasPorJugador: List<List<Dia>> = emptyList()
     private var invsPorJugador: List<Inventario> = emptyList()
     private lateinit var invComidaDao : InventarioComidaDao
+    private lateinit var db_turno : AppDatabase
+    private lateinit var invTarjetaDao : InventarioTarjetaDao
+    private lateinit var jugadorEfectosDao : JugadorEfectoDao
 
     // Índice de jugador actual (0 .. players.size-1)
     private var index = 0
@@ -100,12 +110,39 @@ object TurnoManager {
     var diaId: Long = 0L
         private set
 
+
+    // Luego, en JugadorEfectoViewModel:
+    suspend fun applyEffectTo(playerId: Long, effect: JugadorEfecto) {
+        // 1) Cargo el jugador
+        val jugador = db_turno.jugadorDao().getById(playerId)
+        // 2) Aplico el efecto sobre una copia
+        val updated = when (effect.campo_afectado) {
+            "dinero"   -> jugador.copy(dinero   = jugador.dinero   + if (effect.tipo=="positivo") effect.ingresos else -effect.ingresos)
+            "negocio" -> jugador.copy(
+                ingresos = jugador.ingresos + (jugador.ingresos * effect.ingresos / 100),
+                gastos   = jugador.gastos   + (jugador.gastos   * effect.gastos   / 100)
+            )
+            else       -> jugador
+        }
+        // 3) Persisto los cambios
+        db_turno.jugadorDao().update(updated)
+        // 4) Si es el jugador activo, recargo EstadoTurno
+        if (playerId == EstadoTurno.idJugador) {
+            // Necesitamos también el Dia e Inventario actuales, que puedes obtener
+            // de TurnoManager.playerId y TurnoManager.diaId o mantener en EstadoTurno.
+            EstadoTurno.updateJugador()
+        }
+    }
+
     /** Inicializa los jugadores y carga todos los Días e Inventarios para el mes */
     suspend fun init(partidaId: Long, db: AppDatabase) {
         val daoJ = db.jugadorDao()
         val daoD = db.diaDao()
         val daoI = db.inventarioDao()
         invComidaDao = db.inventarioComidaDao()
+        db_turno = db
+        invTarjetaDao = db.inventarioTarjetaDao()
+        jugadorEfectosDao = db.jugadorEfectoDao()
 
         players = daoJ.getPlayersForPartida(partidaId).toMutableList()  // <-- mutableListOf
         // Para cada jugador, cargar la lista de 31 días del mes
@@ -121,9 +158,80 @@ object TurnoManager {
         actualizarEstado()
     }
 
+
+    /**
+     * Calcula los ingresos y costes de TODOS los negocios del jugador activo,
+     * los suma al jugador en la BD y actualiza EstadoTurno y memoria interna.
+     */
+    suspend fun procesarIngresosYCostesDeNegocios() {
+        // 1) Leemos los detalles de los negocios
+        val invId = EstadoTurno.inventarioId
+        val detalles: List<InventarioNegocioWithNegocio> =
+            db_turno.inventarioNegocioDao()
+                .getConDetalle(invId)
+                .first()  // Flow → List
+
+        // 2) Acumulamos ingresos y costes
+        var ingresosTotal = 0.0
+        var costesTotal   = 0.0
+        detalles.forEach { item ->
+            ingresosTotal += item.negocio.ingresos * item.invNegocio.cantidad
+            costesTotal   += item.negocio.costeMantenimiento * item.invNegocio.cantidad
+        }
+
+        // 3) Recuperamos el jugador actual de la BD
+        val jugador = db_turno.jugadorDao().getById(EstadoTurno.idJugador)
+
+        // 4) Creamos una copia actualizada y la persistimos
+        val actualizado = jugador.copy(
+            ingresos = jugador.ingresos + ingresosTotal,
+            gastos   = jugador.gastos   + costesTotal,
+            dinero   = jugador.dinero   + ingresosTotal - costesTotal
+        )
+        db_turno.jugadorDao().update(actualizado)  // ← persiste en BD
+
+        // 5) Actualizamos EstadoTurno para reflejar los nuevos valores
+        EstadoTurno.dinero   = actualizado.dinero.toInt()
+        EstadoTurno.ingresos = actualizado.ingresos.toInt()
+        EstadoTurno.costes   = actualizado.gastos.toInt()
+        EstadoTurno.updateJugador()
+
+        // 6) Refresca también la lista interna de TurnoManager
+        refreshCurrentPlayerInMemory()
+    }
+
+
     /** Llama a esto cuando hayas persistido un cambio en el jugador */
     fun refreshCurrentPlayerInMemory() {
         players[index] = EstadoTurno.jugador
+    }
+
+    /**
+     * Aplica sobre los ingresos y costes almacenados en EstadoTurno
+     * todos los efectos activos (duracion > 0) cuyo campo_afectado = "negocio".
+     */
+    suspend fun aplicarEfectosNegocioActivos() {
+        // 1) Leemos todos los efectos del jugador actual
+        val efectos = db_turno.jugadorEfectoDao()
+            .getByJugador(EstadoTurno.idJugador)
+            .first()                                      // Flow → List<JugadorEfecto> :contentReference[oaicite:0]{index=0}
+            .filter { it.duracion > 0 && it.campo_afectado == "negocio" }
+
+        // 2) Iteramos y ajustamos EstadoTurno.ingresos y EstadoTurno.costes
+        efectos.forEach { effect ->
+            if (effect.tipo == "positivo" && effect.gastos == 0.0) {
+                // Incremento porcentual
+                EstadoTurno.ingresos += (EstadoTurno.ingresos * effect.ingresos / 100).toInt()
+            } else if (effect.tipo == "negativo" && effect.gastos == 0.0) {
+                // Decremento porcentual
+                EstadoTurno.ingresos -= (EstadoTurno.ingresos * effect.ingresos / 100).toInt()
+            }else if(effect.tipo == "positivo" && effect.ingresos == 0.0){
+                EstadoTurno.costes   -= (EstadoTurno.costes   * effect.gastos   / 100).toInt()
+            }else if (effect.tipo == "negativo" && effect.ingresos == 0.0){
+                EstadoTurno.costes   += (EstadoTurno.costes   * effect.gastos   / 100).toInt()
+            }
+        }
+        refreshCurrentPlayerInMemory()
     }
 
     /** Lógica de avance de día: al completar un ciclo completo de jugadores, sumamos 1 */
@@ -133,6 +241,37 @@ object TurnoManager {
             diaNum++
             invComidaDao.decrementarDuracionYCantidadEnPartida(partidaId)
             invComidaDao.deleteExpiredInPartida(partidaId)
+
+            // 2) Ahora procesamos TODOS los efectos de tarjetas UNA VEZ por día:
+            //    (a) leemos todos en BD, (b) aplicamos, (c) reducimos duración o borramos.
+            val efectos = db_turno.jugadorEfectoDao().getByJugador(EstadoTurno.idJugador).first()
+            for (effect in efectos) {
+                if (effect.duracion > 0) {
+                    applyEffectTo(effect.fkJugador, effect)
+                    val nuevoDur = effect.duracion - 1
+                    if (nuevoDur > 0) {
+                        db_turno.jugadorEfectoDao().update(effect.copy(duracion = nuevoDur))
+                    } else {
+                        db_turno.jugadorEfectoDao().delete(effect)
+                        // 3) Además, RESTAR esa tarjeta de tu inventario:
+                        invTarjetaDao.getByInventarioAndTarjeta(
+                            EstadoTurno.inventarioId, effect.fkTarjeta
+                        )?.let { reg ->
+                            if (reg.cantidad > 1) {
+                                invTarjetaDao.update(reg.copy(cantidad = reg.cantidad - 1))
+                            } else {
+                                invTarjetaDao.delete(reg)
+                            }
+                        }
+                    }
+                }
+            }
+            invTarjetaDao.decrementarDuracionYCantidadEnPartida(partidaId)
+            invTarjetaDao.deleteExpiredInPartida(partidaId)
+
+            jugadorEfectosDao.decrementarDuracionDeTodosEfectos()
+            jugadorEfectosDao.eliminarEfectosExpirados()
+            aplicarEfectosNegocioActivos()
 
         }
     }
@@ -146,12 +285,14 @@ object TurnoManager {
 
         // Lleva la cuenta de los turnos totales
         turno++
-
-        // Si acabamos de completar un ciclo completo, avanzamos el día
-        gestionDia()
+        idJugador = turno.toLong()
 
         // Recargamos el estado con el jugador/día/inventario actuales
         actualizarEstado()
+
+
+        // Si acabamos de completar un ciclo completo, avanzamos el día
+        gestionDia()
     }
 
     /** Carga los IDs y el EstadoTurno desde los arrays según index y diaNum */
@@ -314,6 +455,12 @@ class InventarioTarjetaViewModel(application: Application) : AndroidViewModel(ap
 
 
 
+    fun duracionInventarioTarjeta(invTarjetaId: Long): Flow<Int> =
+        dao
+            .getDuracionById(invTarjetaId)
+            .map { it ?: 0 }
+            .flowOn(Dispatchers.IO)
+
 
     // Exponer un StateFlow parametrizado por inventoryId:
     fun itemsFor(inventarioId: Long): StateFlow<List<InventarioTarjetaWithTarjeta>> =
@@ -329,12 +476,14 @@ class InventarioTarjetaViewModel(application: Application) : AndroidViewModel(ap
             // 2a) actualizar cantidad
             dao.update(existente.copy(cantidad = existente.cantidad + 1))
         } else {
+
             // 2b) insertar nuevo
             dao.insert(
                 InventarioTarjeta(
                     fkInventario = invId,
                     fkTarjeta = tarjeta.id,
                     cantidad = 1,
+                    duracion = 0
                 )
             )
         }
@@ -343,7 +492,6 @@ class InventarioTarjetaViewModel(application: Application) : AndroidViewModel(ap
         EstadoTurno.updateJugador()
         jugadorDao.update(EstadoTurno.jugador)
 
-        TurnoManager.refreshCurrentPlayerInMemory()
         val tarjetaDao : TarjetaDao = db.tarjetaDao()
         tarjeta.efectoValor = tarjetaDao.getPrecioByName(tarjeta.nombre)
     }
@@ -531,6 +679,7 @@ class JugadorEfectoViewModel(application: Application) : AndroidViewModel(applic
 
 
 
+
     fun insert(je: JugadorEfecto) = viewModelScope.launch { dao.insert(je) }
     fun update(je: JugadorEfecto) = viewModelScope.launch { dao.update(je) }
     fun delete(je: JugadorEfecto) = viewModelScope.launch { dao.delete(je) }
@@ -563,9 +712,20 @@ class JugadorEfectoViewModel(application: Application) : AndroidViewModel(applic
 
 
 
-        // 2) Obtenemos todas las tarjetas “jugables”
+        // 2) Todas las tarjetas “jugables” (excluye las 3 primeras)
         val todasDisponibles = tarjetaDao.getExceptFirst3()
         if (todasDisponibles.isEmpty()) return@launch
+
+        // 3) IDs de tarjetas que ya tienes
+        val ownedIds = invTarjetaDao
+            .getConDetalle(invId)              // Flow<List<InventarioTarjetaWithTarjeta>>
+            .first()                           // primera emisión
+            .map { it.tarjeta.id }             // lista de fk_tarjeta actuales
+
+        // 4) Filtrar las que ya tienes
+        val filtradas = todasDisponibles
+            .filterNot { it.id in ownedIds }
+        if (filtradas.isEmpty()) return@launch
 
         // 3) Determinamos el modo según el nombre de la tarjeta antigua
         val modo = when {
@@ -574,26 +734,25 @@ class JugadorEfectoViewModel(application: Application) : AndroidViewModel(applic
             else                                                       -> "aleatoria"
         }
 
-        // 4) Filtramos el pool según el modo
         val pool = when (modo) {
-            "negocio"    -> todasDisponibles.filter { it.tipoTarjeta.equals("negocio", true) }
-            "dinero"     -> todasDisponibles.filter { it.tipoTarjeta.equals("dinero",   true) }
-            "aleatoria"  -> todasDisponibles
-            else         -> todasDisponibles
+            "negocio"   -> filtradas.filter { it.tipoTarjeta.equals("negocio", true) }
+            "dinero"    -> filtradas.filter { it.tipoTarjeta.equals("dinero",   true) }
+            else        -> filtradas
         }
         if (pool.isEmpty()) return@launch
 
-        // 5) Elegimos al azar
+// 6) Escoger al azar y añadir al inventario
         val nueva = pool.random()
-
-        // 6) Insertamos la nueva tarjeta con cantidad = 1
-        invTarjetaDao.insert(
-            InventarioTarjeta(
-                fkInventario = invId,
-                fkTarjeta    = nueva.id,
-                cantidad     = 1
+        if (nueva.tipoTarjeta == "negocio"){
+            invTarjetaDao.insert(
+                InventarioTarjeta(fkInventario = invId, fkTarjeta = nueva.id, cantidad = 1, duracion = 2)
             )
-        )
+        }else{
+            invTarjetaDao.insert(
+                InventarioTarjeta(fkInventario = invId, fkTarjeta = nueva.id, cantidad = 1, duracion = 0)
+            )
+        }
+
 
         // 7) Preparamos los campos del efecto
         val tipoEfecto   = if (nueva.tipoEfecto.equals("Positivo", true)) "positivo" else "negativo"
@@ -607,39 +766,60 @@ class JugadorEfectoViewModel(application: Application) : AndroidViewModel(applic
         val duracion = if (nueva.tipoTarjeta.equals("dinero", true)) 0 else 2
 
         // 8) Función auxiliar para crear el efecto
-        fun crearEfectoPara(jugadorDestino: Long) = JugadorEfecto(
-            fkJugador      = jugadorDestino,
-            fkTarjeta      = nueva.id,
-            tipo           = tipoEfecto,
-            campo_afectado = campo,
-            ingresos       = when {
-                nueva.tipoTarjeta.equals("dinero", true)             -> valor
-                nueva.queModifica.equals("ingresos", true)           -> valor
-                else                                                  -> 0.0
-            },
-            gastos         = if (
-                nueva.tipoTarjeta.equals("negocio", true)
-                && nueva.queModifica.equals("costes", true)
-            ) valor else 0.0,
-            cantidad       = cantidad,
-            duracion       = duracion
-        )
+        fun crearEfectoPara(jugadorDestino: Long) : JugadorEfecto{
+            val jugadorefecto = JugadorEfecto(
+                fkJugador      = jugadorDestino,
+                fkTarjeta      = nueva.id,
+                tipo           = tipoEfecto,
+                campo_afectado = campo,
+                ingresos       = when {
+                    nueva.tipoTarjeta.equals("dinero", true)             -> valor
+                    nueva.queModifica.equals("ingresos", true)           -> valor
+                    else                                                  -> 0.0
+                },
+                gastos         = if (
+                    nueva.tipoTarjeta.equals("negocio", true)
+                    && nueva.queModifica.equals("costes", true)
+                ) valor else 0.0,
+                cantidad       = cantidad,
+                duracion       = duracion
+            )
+            comprobarEfectos(jugadorefecto)
+            return jugadorefecto
 
-        // 9) Insertamos el efecto al propio o a los otros
+        }
         if (nueva.dirigidoA.equals("Propio", true)) {
-            dao.insert(crearEfectoPara(jugadorId))
+            val effect = crearEfectoPara(jugadorId)
+            dao.insert(effect)                                  // persisto el efecto             // si es inmediato
+            applyEffectTo(jugadorId, effect)                 // aplico y persisto
         } else {
             TurnoManager.players
                 .map { it.id }
                 .filter { it != jugadorId }
                 .forEach { otherId ->
-                    dao.insert(crearEfectoPara(otherId))
+                    if (otherId != jugadorId){
+                        val effect = crearEfectoPara(otherId)
+                        dao.insert(effect)
+                        applyEffectTo(otherId, effect)
+                    }
                 }
         }
-        comprobarEfectos(nueva)
     }
-    fun comprobarEfectos(nueva : Tarjeta){
-        
+
+
+
+    fun comprobarEfectos(nueva : JugadorEfecto){
+        if (nueva.tipo == "positivo" && nueva.campo_afectado == "negocio"){
+            EstadoTurno.ingresos = EstadoTurno.ingresos + (EstadoTurno.ingresos*nueva.ingresos/100).toInt()
+            EstadoTurno.costes = EstadoTurno.costes + (EstadoTurno.costes*nueva.gastos/100).toInt()
+        }else if(nueva.tipo == "negativo" && nueva.campo_afectado == "negocio"){
+            EstadoTurno.ingresos = EstadoTurno.ingresos - (EstadoTurno.ingresos*nueva.ingresos/100).toInt()
+            EstadoTurno.costes = EstadoTurno.costes - (EstadoTurno.costes*nueva.gastos/100).toInt()
+        }else if (nueva.tipo == "positivo" && nueva.campo_afectado == "dinero"){
+            EstadoTurno.dinero = EstadoTurno.dinero + nueva.ingresos.toInt()
+        }else if (nueva.tipo == "negativo" && nueva.campo_afectado == "dinero"){
+            EstadoTurno.dinero = EstadoTurno.dinero - nueva.ingresos.toInt()
+        }
     }
 }
 
@@ -798,8 +978,10 @@ class ResumenDiaViewModel(application: Application) : AndroidViewModel(applicati
 
     /** Guarda o actualiza el resumen del turno actual (día + jugador) */
     fun saveResumenTurnoActual() = viewModelScope.launch {
+        Log.d("ResumenDia", "SALVANDO RESUMEN: jugadorId=${EstadoTurno.idJugador}, diaNum=${EstadoTurno.diaNum}")
+
         val diaId      = EstadoTurno.diaNum
-        val jugadorId  = idJugador
+        val jugadorId = EstadoTurno.idJugador
         val dinero     = dinero.toDouble()
         val ingresos   = EstadoTurno.ingresos.toDouble()
         val gastos     = EstadoTurno.costes.toDouble()

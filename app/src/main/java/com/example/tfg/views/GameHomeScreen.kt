@@ -146,18 +146,19 @@ fun GameHomeScreen(
         snapshotFlow { EstadoTurno.nombre }
             .collect { value = it }
     }
-    val efectivo by produceState(initialValue = 0) {
-        snapshotFlow { EstadoTurno.dinero }
+
+    val currentPlayerId by produceState(initialValue = 0L) {
+        snapshotFlow { EstadoTurno.idJugador }
             .collect { value = it }
     }
-    val ingresos by produceState(initialValue = 0) {
-        snapshotFlow { EstadoTurno.ingresos }
-            .collect { value = it }
+
+    val jugadorActual = remember(jugadores, currentPlayerId) {
+        jugadores.firstOrNull { it.id == currentPlayerId }
     }
-    val gastos by produceState(initialValue = 0) {
-        snapshotFlow { EstadoTurno.costes }
-            .collect { value = it }
-    }
+
+    val efectivo    = jugadorActual?.dinero?.toInt()    ?: 0
+    val ingresos = jugadorActual?.ingresos?.toInt() ?: 0
+    val gastos   = jugadorActual?.gastos?.toInt()   ?: 0
 
 
 
@@ -287,11 +288,11 @@ fun GameHomeScreen(
 
             Button(
                 onClick = {
-                    resumenDiaVM.saveResumenTurnoActual()
                     uiScope.launch {
+                        resumenDiaVM.saveResumenTurnoActual()
                         TurnoManager.next()
+                        shopVM.generarTiendaNueva(idJugador, diaId)
                     }
-                    shopVM.generarTiendaNueva(idJugador, diaId)
                 },
                 modifier = Modifier
                     .fillMaxWidth()

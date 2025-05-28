@@ -46,6 +46,7 @@ import com.example.tfg.viewmodel.TarjetaViewModel
 import com.example.tfg.viewmodel.TurnoManager
 import com.example.tfg.viewmodel.TurnoManager.playerId
 import com.example.tfg.viewmodel.TurnoManager.diaId
+import com.example.tfg.viewmodel.TurnoManager.procesarIngresosYCostesDeNegocios
 import com.example.tfg.viewmodel.TurnoManager.turno
 import com.example.tfg.viewmodel.TurnoManager.ultimoTurnoGenerado
 import kotlinx.coroutines.launch
@@ -408,11 +409,16 @@ fun ShopScreen(
             },
             confirmButton = {
                 val negocioVM : NegocioViewModel = viewModel()
+                val uiScope = rememberCoroutineScope()
                 Button(
                     onClick = {
-                        negocio.costeTienda = shopVM.aplicarDescuento(negocio.costeTienda,descuento)
-                        invNegVM.comprarNegocio(negocio)  // <-- insert/update en inventario_negocio
-                        selectedNegocio = null},
+                        uiScope.launch {
+                            negocio.costeTienda = shopVM.aplicarDescuento(negocio.costeTienda,descuento)
+                            invNegVM.comprarNegocio(negocio)
+                            procesarIngresosYCostesDeNegocios()
+                            selectedNegocio = null
+                        }
+                              },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = darkGreen,
                         contentColor = Color.White
