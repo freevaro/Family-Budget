@@ -414,7 +414,8 @@ fun ShopScreen(
                     onClick = {
                         uiScope.launch {
                             negocio.costeTienda = shopVM.aplicarDescuento(negocio.costeTienda,descuento)
-                            invNegVM.comprarNegocio(negocio)
+                            val job = invNegVM.comprarNegocio(negocio)
+                            job.join()
                             procesarIngresosYCostesDeNegocios()
                             selectedNegocio = null
                         }

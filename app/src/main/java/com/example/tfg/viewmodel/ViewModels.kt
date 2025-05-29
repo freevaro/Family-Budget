@@ -3,6 +3,7 @@ package com.example.tfg.viewmodel
 import android.app.Application
 import android.util.Log
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -17,12 +18,15 @@ import com.example.tfg.dao.InventarioComidaWithComida
 import com.example.tfg.dao.InventarioNegocioWithNegocio
 import com.example.tfg.dao.InventarioTarjetaDao
 import com.example.tfg.dao.InventarioTarjetaWithTarjeta
+import com.example.tfg.dao.JugadorDao
 import com.example.tfg.dao.JugadorEfectoDao
 import com.example.tfg.dao.NegocioDao
 import com.example.tfg.dao.TarjetaDao
 import com.example.tfg.entity.*
+import com.example.tfg.viewmodel.EstadoTurno.costes
 import com.example.tfg.viewmodel.EstadoTurno.dinero
 import com.example.tfg.viewmodel.EstadoTurno.idJugador
+import com.example.tfg.viewmodel.EstadoTurno.ingresos
 import com.example.tfg.viewmodel.PartidaDatos.listaJugadores
 import com.example.tfg.viewmodel.PartidaDatos.partidaId
 import com.example.tfg.viewmodel.TurnoManager.applyEffectTo
@@ -55,11 +59,13 @@ object EstadoTurno {
     var nombre        by mutableStateOf("")
     var dinero        by mutableIntStateOf(0)
     var ingresos      by mutableIntStateOf(0)
+    var ingresosOriginal by mutableDoubleStateOf(0.0)
     var costes        by mutableIntStateOf(0)
+    var costesOriginal by mutableDoubleStateOf(0.0)
     var diaId         by mutableLongStateOf(0L)
     var diaNum        by mutableIntStateOf(0)
     var inventarioId  by mutableLongStateOf(0L)
-    var jugador       by mutableStateOf<Jugador>(Jugador(idJugador,nombre,dinero.toDouble(),ingresos.toDouble(),costes.toDouble()))
+    var jugador       by mutableStateOf<Jugador>(Jugador(idJugador,nombre,dinero.toDouble(),ingresos.toDouble(),ingresosOriginal,costes.toDouble(),costesOriginal))
 
     /** Actualiza todas las propiedades a partir de un Jugador y sus datos relacionados */
     fun loadFrom(
@@ -71,13 +77,15 @@ object EstadoTurno {
         nombre       = jugador.nombre
         dinero       = jugador.dinero.toInt()
         ingresos     = jugador.ingresos.toInt()
+        ingresosOriginal = jugador.ingresosOriginal
         costes       = jugador.gastos.toInt()
+        costesOriginal = jugador.gastosOriginal
         diaId        = dia.id
         inventarioId = inventario.id
         diaNum       = dia.numeroDia
     }
     fun updateJugador(){
-        jugador = Jugador(idJugador,nombre,dinero.toDouble(),ingresos.toDouble(),costes.toDouble())
+        jugador = Jugador(idJugador,nombre,dinero.toDouble(),ingresos.toDouble(),ingresosOriginal,costes.toDouble(),costesOriginal)
     }
 }
 
@@ -91,6 +99,7 @@ object TurnoManager {
     private lateinit var db_turno : AppDatabase
     private lateinit var invTarjetaDao : InventarioTarjetaDao
     private lateinit var jugadorEfectosDao : JugadorEfectoDao
+    private lateinit var jugadorDao : JugadorDao
 
     // Índice de jugador actual (0 .. players.size-1)
     private var index = 0
@@ -117,11 +126,39 @@ object TurnoManager {
         val jugador = db_turno.jugadorDao().getById(playerId)
         // 2) Aplico el efecto sobre una copia
         val updated = when (effect.campo_afectado) {
-            "dinero"   -> jugador.copy(dinero   = jugador.dinero   + if (effect.tipo=="positivo") effect.ingresos else -effect.ingresos)
-            "negocio" -> jugador.copy(
-                ingresos = jugador.ingresos + (jugador.ingresos * effect.ingresos / 100),
-                gastos   = jugador.gastos   + (jugador.gastos   * effect.gastos   / 100)
-            )
+            "dinero"   -> {
+                if (effect.tipo == "positivo"){
+                    jugador.copy(dinero   = jugador.dinero + effect.ingresos)
+                }else{
+                    jugador.copy(dinero = jugador.dinero - effect.ingresos)
+                }
+            }
+            "negocio" -> {
+                val base = jugador.ingresos
+                val delta = base * (effect.ingresos / 100)      // p.ej. 1.0 * (100.0/100) = 1.0
+
+                val nuevoIngresos = if (effect.tipo == "positivo")
+                    base + delta
+                else
+                // restamos el porcentaje, y garantizamos mínimo 0
+                    (base - delta).coerceAtLeast(0.0)
+
+                jugador.copy(ingresos = nuevoIngresos)
+                if (effect.tipo == "positivo" && effect.gastos == 0.0) {
+                    // Incremento porcentual
+                    jugador.copy(ingresos = jugador.ingresos + (jugador.ingresos*effect.ingresos/100))
+                } else if (effect.tipo == "negativo" && effect.gastos == 0.0) {
+                    // Decremento porcentual
+                    jugador.copy(ingresos = jugador.ingresos - (jugador.ingresos*effect.ingresos/100).coerceAtLeast(0.0))
+                }else if(effect.tipo == "positivo" && effect.ingresos == 0.0){
+                    jugador.copy(gastos = jugador.gastos - (jugador.gastos*effect.gastos/100).coerceAtLeast(0.0))
+                }else if (effect.tipo == "negativo" && effect.ingresos == 0.0){
+                    jugador.copy(gastos = jugador.gastos + (jugador.gastos*effect.gastos/100))
+
+                }else{
+                    jugador
+                }
+            }
             else       -> jugador
         }
         // 3) Persisto los cambios
@@ -143,6 +180,7 @@ object TurnoManager {
         db_turno = db
         invTarjetaDao = db.inventarioTarjetaDao()
         jugadorEfectosDao = db.jugadorEfectoDao()
+        jugadorDao = db.jugadorDao()
 
         players = daoJ.getPlayersForPartida(partidaId).toMutableList()  // <-- mutableListOf
         // Para cada jugador, cargar la lista de 31 días del mes
@@ -186,7 +224,8 @@ object TurnoManager {
         val actualizado = jugador.copy(
             ingresos = jugador.ingresos + ingresosTotal,
             gastos   = jugador.gastos   + costesTotal,
-            dinero   = jugador.dinero   + ingresosTotal - costesTotal
+            ingresosOriginal = jugador.ingresosOriginal + ingresosTotal,
+            gastosOriginal = jugador.gastosOriginal + costesTotal
         )
         db_turno.jugadorDao().update(actualizado)  // ← persiste en BD
 
@@ -231,7 +270,10 @@ object TurnoManager {
                 EstadoTurno.costes   += (EstadoTurno.costes   * effect.gastos   / 100).toInt()
             }
         }
-        refreshCurrentPlayerInMemory()
+        // Solo refrescamos si había algún efecto
+        if (efectos.isNotEmpty() && players.isNotEmpty()) {
+            refreshCurrentPlayerInMemory()
+        }
     }
 
     /** Lógica de avance de día: al completar un ciclo completo de jugadores, sumamos 1 */
@@ -239,6 +281,17 @@ object TurnoManager {
         // Si acabamos de envolver al primer jugador (antes estábamos en el último)
         if (index == 0) {
             diaNum++
+
+
+            var cont = 0
+            players.forEach { jugador ->
+                var dinerojugador = jugador.dinero + jugador.ingresos - jugador.gastos
+                val actualizado = jugador.copy(dinero = dinerojugador)
+                jugadorDao.update(actualizado)
+                players[cont] = actualizado
+                cont++
+            }
+
             invComidaDao.decrementarDuracionYCantidadEnPartida(partidaId)
             invComidaDao.deleteExpiredInPartida(partidaId)
 
@@ -272,7 +325,6 @@ object TurnoManager {
             jugadorEfectosDao.decrementarDuracionDeTodosEfectos()
             jugadorEfectosDao.eliminarEfectosExpirados()
             aplicarEfectosNegocioActivos()
-
         }
     }
 
@@ -287,12 +339,12 @@ object TurnoManager {
         turno++
         idJugador = turno.toLong()
 
+        // Si acabamos de completar un ciclo completo, avanzamos el día
+        gestionDia()
+
         // Recargamos el estado con el jugador/día/inventario actuales
         actualizarEstado()
 
-
-        // Si acabamos de completar un ciclo completo, avanzamos el día
-        gestionDia()
     }
 
     /** Carga los IDs y el EstadoTurno desde los arrays según index y diaNum */
@@ -630,7 +682,7 @@ class PartidaStartViewModel(application: Application) : AndroidViewModel(applica
             playerNames.forEach { nombre ->
                 // a) Jugador
                 val jugadorId = jugadorDao.insert(
-                    Jugador(nombre = nombre, dinero = 999999.0, ingresos = 0.0, gastos = 0.0)
+                    Jugador(nombre = nombre, dinero = 999999.0, ingresos = 0.0, gastos = 0.0, ingresosOriginal = 0.0, gastosOriginal = 0.0)
                 )
                 // Se aplica el id a los datos
                 PartidaDatos.aplicarid(jugadorId)

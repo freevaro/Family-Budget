@@ -41,7 +41,9 @@ data class Jugador(
     val nombre: String,
     val dinero: Double,
     val ingresos: Double,
-    val gastos: Double
+    val ingresosOriginal : Double,
+    val gastos: Double,
+    val gastosOriginal : Double
 )
 
 /**
