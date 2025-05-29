@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.CalendarToday
 
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.CheckCircle
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
@@ -508,12 +509,21 @@ fun GameHomeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(
-                                    text = "Jugador:",
-                                    fontFamily = fuenteprincipal,
-                                    fontSize = Dimensions.responsiveSp(14f),
-                                    color = Color.Black
-                                )
+                                Row(
+                                ){
+                                    Icon(
+                                        imageVector = Icons.Default.Person,
+                                        contentDescription = "Jugador",
+                                        tint = darkGreen,
+                                        modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                                    )
+                                    Text(
+                                        text = "Jugador:",
+                                        fontFamily = fuenteprincipal,
+                                        fontSize = Dimensions.responsiveSp(14f),
+                                        color = Color.Black
+                                    )
+                                }
                                 Text(
                                     text = nombre,
                                     fontFamily = fuenteprincipal,
@@ -527,12 +537,20 @@ fun GameHomeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
-                                Text(
-                                    text = "Día:",
-                                    fontFamily = fuenteprincipal,
-                                    fontSize = Dimensions.responsiveSp(14f),
-                                    color = Color.Black
-                                )
+                                Row {
+                                    Icon(
+                                        imageVector = Icons.Default.CalendarToday,
+                                        contentDescription = "Dia",
+                                        tint = darkGreen,
+                                        modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                                    )
+                                    Text(
+                                        text = "Día:",
+                                        fontFamily = fuenteprincipal,
+                                        fontSize = Dimensions.responsiveSp(14f),
+                                        color = Color.Black
+                                    )
+                                }
                                 Text(
                                     text = diaNum.toString(),
                                     fontFamily = fuenteprincipal,
@@ -546,32 +564,22 @@ fun GameHomeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
+                                Row{
+                                    Icon(
+                                        imageVector = Icons.Default.AttachMoney,
+                                        contentDescription = "Dinero",
+                                        tint = Color(0xFF4f7123),
+                                        modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                                    )
+                                    Text(
+                                        text = "Dinero:",
+                                        fontFamily = fuenteprincipal,
+                                        fontSize = Dimensions.responsiveSp(14f),
+                                        color = Color.Black
+                                    )
+                                }
                                 Text(
-                                    text = "Dinero:",
-                                    fontFamily = fuenteprincipal,
-                                    fontSize = Dimensions.responsiveSp(14f),
-                                    color = Color.Black
-                                )
-                                Text(
-                                    text = efectivo.toString(),
-                                    fontFamily = fuenteprincipal,
-                                    fontSize = Dimensions.responsiveSp(14f),
-                                    fontWeight = FontWeight.Bold,
-                                    color = Color.Black
-                                )
-                            }
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween
-                            ) {
-                                Text(
-                                    text = "Ingresos:",
-                                    fontFamily = fuenteprincipal,
-                                    fontSize = Dimensions.responsiveSp(14f),
-                                    color = Color.Black
-                                )
-                                Text(
-                                    text = ingresos.toString(),
+                                    text = "$$efectivo",
                                     fontFamily = fuenteprincipal,
                                     fontSize = Dimensions.responsiveSp(14f),
                                     fontWeight = FontWeight.Bold,
@@ -582,14 +590,48 @@ fun GameHomeScreen(
                                 modifier = Modifier.fillMaxWidth(),
                                 horizontalArrangement = Arrangement.SpaceBetween
                             ) {
+                                Row{
+                                    Icon(
+                                        imageVector = Icons.Default.TrendingUp,
+                                        contentDescription = "Ingresos",
+                                        tint = Color(0xFF4f7123),
+                                        modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                                    )
+                                    Text(
+                                        text = "Ingresos:",
+                                        fontFamily = fuenteprincipal,
+                                        fontSize = Dimensions.responsiveSp(14f),
+                                        color = Color.Black
+                                    )
+                                }
                                 Text(
-                                    text = "Gastos:",
+                                    text = "$$ingresos",
                                     fontFamily = fuenteprincipal,
                                     fontSize = Dimensions.responsiveSp(14f),
+                                    fontWeight = FontWeight.Bold,
                                     color = Color.Black
                                 )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row{
+                                    Icon(
+                                        imageVector = Icons.Default.TrendingDown,
+                                        contentDescription = "Gastos",
+                                        tint = darkGreen,
+                                        modifier = Modifier.size(Dimensions.widthPercentage(5f))
+                                    )
+                                    Text(
+                                        text = "Gastos:",
+                                        fontFamily = fuenteprincipal,
+                                        fontSize = Dimensions.responsiveSp(14f),
+                                        color = Color.Black
+                                    )
+                                }
                                 Text(
-                                    text = gastos.toString(),
+                                    text = "$$gastos",
                                     fontFamily = fuenteprincipal,
                                     fontSize = Dimensions.responsiveSp(14f),
                                     fontWeight = FontWeight.Bold,
@@ -601,21 +643,14 @@ fun GameHomeScreen(
                 }
             },
             confirmButton = {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = Dimensions.widthPercentage(4f)),
-                    horizontalArrangement = Arrangement.spacedBy(Dimensions.widthPercentage(3f))
-                ) {
-                    // Botón Cancelar
+
                     Button(
                         onClick = { showEndTurnDialog.value = false },
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFF424242),
+                            containerColor = Color(0xFF719353),
                             contentColor = Color.White
                         ),
-                        shape = RoundedCornerShape(Dimensions.widthPercentage(3f)),
-                        modifier = Modifier.weight(1f)
+                        shape = RoundedCornerShape(Dimensions.widthPercentage(3f))
                     ) {
                         Text(
                             "CANCELAR",
@@ -625,7 +660,6 @@ fun GameHomeScreen(
                         )
                     }
 
-                    // Botón Confirmar
                     Button(
                         onClick = {
                             showEndTurnDialog.value = false
@@ -639,7 +673,7 @@ fun GameHomeScreen(
                             contentColor = Color.White
                         ),
                         shape = RoundedCornerShape(Dimensions.widthPercentage(3f)),
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier.padding(end = Dimensions.widthPercentage(2.5f))
                     ) {
                         Text(
                             "CONFIRMAR",
@@ -649,7 +683,6 @@ fun GameHomeScreen(
                         )
                     }
                 }
-            }
         )
     }
 }

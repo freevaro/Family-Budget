@@ -74,7 +74,7 @@ fun MainScreen(
     // Colores del juego
     val backgroundGreen = Color(0xFFc1ff72)
     val buttonGreen = Color(0xFF9CCD5C)
-    val darkGreen = Color(0xFF759E73)
+    val darkGreen = Color(0xFF6B9A2F)
 
     val context = LocalContext.current
     val db = remember { AppDatabase.getInstance(context) }
@@ -84,7 +84,6 @@ fun MainScreen(
     val showPlayerDialog = remember { mutableStateOf(false) }
 
     // Estados para selección de jugadores
-
 
     val playerNames = remember { mutableStateListOf("", "", "", "") }
 
@@ -332,9 +331,7 @@ fun MainScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (allNamesFilled) Color(0xFF0A7A12) else Color(
-                                    0xFF313131
-                                )
+                                .background(if (allNamesFilled) darkGreen else Color(0xFF719353)
                                 )
                                 .clickable(enabled = allNamesFilled) {
                                     partidaVM.empezarPartida(playerNames.take(playersCount))
