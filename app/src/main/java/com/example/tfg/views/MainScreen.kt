@@ -331,13 +331,13 @@ fun MainScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (allNamesFilled) darkGreen else Color(0xFF719353)
-                                )
+                                .background(if (allNamesFilled) darkGreen else darkGreen.copy(alpha = 0.5f))
                                 .clickable(enabled = allNamesFilled) {
                                     partidaVM.empezarPartida(playerNames.take(playersCount))
                                     showPlayerDialog.value = false
-                                    // Navegar a la pantalla de juego pasando parámetros
-                                    navController.navigate("pantalla_juego")
+                                    // Navigate to transition screen with first player's name
+                                    val firstPlayerName = playerNames[0]
+                                    navController.navigate("turn_transition/$firstPlayerName")
                                 }
                                 .padding(horizontal = 40.dp, vertical = 12.dp)
                         ) {

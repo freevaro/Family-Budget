@@ -666,7 +666,11 @@ fun GameHomeScreen(
                             uiScope.launch {
                                 TurnoManager.next()
                                 shopVM.generarTiendaNueva(idJugador, diaId)
+                                navController.navigate("turn_transition/$nombre") {
+                                    popUpTo("pantalla_juego") { inclusive = true }
+                                }
                             }
+
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = darkGreen,

@@ -161,6 +161,14 @@ class MainActivity : ComponentActivity() {
                             currentScreen = "loading"
                             LoadingScreen(Modifier, navController)
                         }
+                        composable("turn_transition/{playerName}") { backStackEntry ->
+                            val playerName = backStackEntry.arguments?.getString("playerName") ?: ""
+                            currentScreen = "turn_transition"
+                            TurnTransitionScreen(
+                                playerName = playerName,
+                                navController = navController
+                            )
+                        }
                         composable("pantalla_principal") {
                             currentScreen = "pantalla_principal"
                             MainScreen(

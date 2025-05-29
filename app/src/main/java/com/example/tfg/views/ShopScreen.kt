@@ -1,6 +1,18 @@
 package com.example.tfg.views
 
 import androidx.activity.ComponentActivity
+import androidx.compose.animation.core.EaseInOutCubic
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,8 +30,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.Font
@@ -29,6 +45,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.tfg.R
@@ -49,7 +67,10 @@ import com.example.tfg.viewmodel.TurnoManager.diaId
 import com.example.tfg.viewmodel.TurnoManager.procesarIngresosYCostesDeNegocios
 import com.example.tfg.viewmodel.TurnoManager.turno
 import com.example.tfg.viewmodel.TurnoManager.ultimoTurnoGenerado
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.math.cos
+import kotlin.math.sin
 
 
 /**
@@ -73,6 +94,9 @@ fun ShopScreen(
     onNavigateToShop: () -> Unit = {},
     onNavigateToSettings: () -> Unit = {},
 ) {
+    // Variables para el modal de confirmación de compra
+    var showPurchaseModal by remember { mutableStateOf(false) }
+    var purchasedProduct by remember { mutableStateOf<Triple<String, ImageVector, String>?>(null) }
     val activity = LocalContext.current as ComponentActivity
     val shopVM: ShopViewModel = viewModel(
         viewModelStoreOwner = activity
@@ -220,18 +244,10 @@ fun ShopScreen(
                 )
             }
 
-            if (descuento > 0) {
-                Text(
-                    text = "¡Descuento por comida: -$descuento% en todos los precios!",
-                    color = Color.White,
-                    fontSize = 14.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .background(Color.Red.copy(alpha = 0.7f))
-                        .padding(6.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
+            DiscountBanner(
+                descuento = descuento,
+                fuenteprincipal = fuenteprincipal
+            )
 
             // Sección Negocios
             CategorySection(
@@ -413,13 +429,22 @@ fun ShopScreen(
                 Button(
                     onClick = {
                         uiScope.launch {
-                            negocio.costeTienda = shopVM.aplicarDescuento(negocio.costeTienda,descuento)
+                            negocio.costeTienda = shopVM.aplicarDescuento(negocio.costeTienda, descuento)
                             val job = invNegVM.comprarNegocio(negocio)
                             job.join()
                             procesarIngresosYCostesDeNegocios()
+
+                            // Mostrar el modal de confirmación
+                            purchasedProduct = Triple(
+                                negocio.nombre,
+                                iconFromString(negocio.icon),
+                                "$${negocio.costeTienda.toInt()}"
+                            )
+                            showPurchaseModal = true
+
                             selectedNegocio = null
                         }
-                              },
+                    },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = darkGreen,
                         contentColor = Color.White
@@ -520,22 +545,28 @@ fun ShopScreen(
                 val uiScope = rememberCoroutineScope()
                 Button(
                     onClick = {
-                        // 1) Lanzamos una coroutine para no bloquear la UI
                         uiScope.launch {
-                            // 2) Obtenemos el inventario actual
                             val inventario = shopVM.getInventarioSync(playerId)
-                            // 3) Contamos si ya existe esa comida
                             val count = shopVM.countComidaEnInventario(inventario.id, comida.nombre)
-                            // 4) Ahora compramos
                             val precioDescontado = shopVM.aplicarDescuento(
                                 comida.precio.toDouble(), descuento
                             ).toInt()
                             invComidaVM.comprarComida(comida, precioDescontado)
 
-                            // 5) Solo si era 0 (no existía), actualizamos descuento
                             if (count == 0) {
                                 shopVM.actualizarDescuento(playerId)
                             }
+
+                            // Mostrar el modal de confirmación
+                            val icon = when (comida.nombre) {
+                                "Comida Diaria" -> Icons.Default.Fastfood
+                                "Comida Semanal" -> Icons.Default.Restaurant
+                                "Comida Premium" -> Icons.Default.RestaurantMenu
+                                else -> Icons.Default.Fastfood
+                            }
+                            purchasedProduct = Triple(comida.nombre, icon, "$${precioDescontado}")
+                            showPurchaseModal = true
+
                             selectedComida = null
                         }
                     },
@@ -616,8 +647,17 @@ fun ShopScreen(
                 val tarjetaVM : TarjetaViewModel = viewModel()
                 Button(
                     onClick = {
-                        tarjeta.efectoValor = shopVM.aplicarDescuento(tarjeta.efectoValor.toDouble(),descuento).toInt()
+                        tarjeta.efectoValor = shopVM.aplicarDescuento(tarjeta.efectoValor.toDouble(), descuento).toInt()
                         invTarjetaVM.comprarTarjeta(tarjeta)
+
+                        // Mostrar el modal de confirmación
+                        purchasedProduct = Triple(
+                            tarjeta.nombre,
+                            Icons.Default.CardGiftcard,
+                            "$${tarjeta.efectoValor}"
+                        )
+                        showPurchaseModal = true
+
                         selectedTarjeta = null
                     },
                     colors = ButtonDefaults.buttonColors(
@@ -636,6 +676,23 @@ fun ShopScreen(
                     )
                 }
             }
+        )
+    }
+    // Modal de confirmación de compra
+    purchasedProduct?.let { (name, icon, price) ->
+        PurchaseConfirmationModal(
+            isVisible = showPurchaseModal,
+            productName = name,
+            productIcon = icon,
+            productPrice = price,
+            onDismiss = {
+                showPurchaseModal = false
+                purchasedProduct = null
+            },
+            fuenteprincipal = fuenteprincipal,
+            primaryGreen = primaryGreen,
+            darkGreen = darkGreen,
+            lightGreen = lightGreen
         )
     }
 }
@@ -1156,6 +1213,381 @@ fun DetalleTarjetaItem(
         )
     }
 }
+
+
+
+@Composable
+fun DiscountBanner(
+    descuento: Int,
+    fuenteprincipal: FontFamily,
+    modifier: Modifier = Modifier
+) {
+    if (descuento > 0) {
+        Card(
+            modifier = modifier
+                .fillMaxWidth()
+                .padding(
+                    horizontal = Dimensions.widthPercentage(2f),
+                    vertical = Dimensions.heightPercentage(1f)
+                ),
+            colors = CardDefaults.cardColors(
+                containerColor = Color(0xFFFF6B35) // Naranja vibrante para destacar
+            ),
+            shape = RoundedCornerShape(Dimensions.widthPercentage(4f)),
+            elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Color(0xFF355D34), // Naranja
+                                Color(0xFF518D50), // Naranja más claro
+                                Color(0xFF355D34)  // Naranja
+                            )
+                        )
+                    )
+                    .padding(Dimensions.widthPercentage(4f))
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    // Icono de descuento animado
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(Dimensions.widthPercentage(12f))
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.2f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocalOffer,
+                            contentDescription = "Descuento",
+                            tint = Color.White,
+                            modifier = Modifier.size(Dimensions.widthPercentage(7f))
+                        )
+                    }
+
+                    // Contenido del mensaje
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(horizontal = Dimensions.widthPercentage(3f)),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        // Texto principal del descuento
+                        Text(
+                            text = "¡OFERTA ESPECIAL!",
+                            fontFamily = fuenteprincipal,
+                            fontSize = Dimensions.responsiveSp(16f),
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White,
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(Dimensions.heightPercentage(0.5f)))
+
+                        // Porcentaje de descuento destacado
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Text(
+                                text = "-$descuento%",
+                                fontFamily = fuenteprincipal,
+                                fontSize = Dimensions.responsiveSp(24f),
+                                fontWeight = FontWeight.ExtraBold,
+                                color = Color.White,
+                                modifier = Modifier
+                                    .background(
+                                        Color.White.copy(alpha = 0.2f),
+                                        RoundedCornerShape(Dimensions.widthPercentage(2f))
+                                    )
+                                    .padding(
+                                        horizontal = Dimensions.widthPercentage(2f),
+                                        vertical = Dimensions.heightPercentage(0.5f)
+                                    )
+                            )
+
+                            Spacer(modifier = Modifier.width(Dimensions.widthPercentage(2f)))
+
+                            Text(
+                                text = "EN COMIDAS",
+                                fontFamily = fuenteprincipal,
+                                fontSize = Dimensions.responsiveSp(12f),
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White.copy(alpha = 0.9f)
+                            )
+                        }
+                    }
+
+                    // Icono de comida
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(Dimensions.widthPercentage(12f))
+                            .clip(CircleShape)
+                            .background(Color.White.copy(alpha = 0.2f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Restaurant,
+                            contentDescription = "Comida",
+                            tint = Color.White,
+                            modifier = Modifier.size(Dimensions.widthPercentage(7f))
+                        )
+                    }
+                }
+
+                // Decoración de esquinas con pequeños iconos
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.3f),
+                    modifier = Modifier
+                        .size(Dimensions.widthPercentage(4f))
+                        .align(Alignment.TopStart)
+                        .offset(
+                            x = Dimensions.widthPercentage(1f),
+                            y = Dimensions.heightPercentage(0.5f)
+                        )
+                )
+
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.3f),
+                    modifier = Modifier
+                        .size(Dimensions.widthPercentage(4f))
+                        .align(Alignment.TopEnd)
+                        .offset(
+                            x = -Dimensions.widthPercentage(1f),
+                            y = Dimensions.heightPercentage(0.5f)
+                        )
+                )
+
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.3f),
+                    modifier = Modifier
+                        .size(Dimensions.widthPercentage(4f))
+                        .align(Alignment.BottomStart)
+                        .offset(
+                            x = Dimensions.widthPercentage(1f),
+                            y = -Dimensions.heightPercentage(0.5f)
+                        )
+                )
+
+                Icon(
+                    imageVector = Icons.Default.Star,
+                    contentDescription = null,
+                    tint = Color.White.copy(alpha = 0.3f),
+                    modifier = Modifier
+                        .size(Dimensions.widthPercentage(4f))
+                        .align(Alignment.BottomEnd)
+                        .offset(
+                            x = -Dimensions.widthPercentage(1f),
+                            y = -Dimensions.heightPercentage(0.5f)
+                        )
+                )
+            }
+        }
+    }
+}
+
+
+// Estado para controlar el modal de compra
+@Composable
+fun PurchaseConfirmationModal(
+    isVisible: Boolean,
+    productName: String,
+    productIcon: ImageVector,
+    productPrice: String,
+    onDismiss: () -> Unit,
+    fuenteprincipal: FontFamily,
+    primaryGreen: Color = Color(0xFF9CCD5C),
+    darkGreen: Color = Color(0xFF6B9A2F),
+    lightGreen: Color = Color(0xFFB5E878)
+) {
+    if (isVisible) {
+        // Animaciones
+        var showContent by remember { mutableStateOf(false) }
+        var showCheckmark by remember { mutableStateOf(false) }
+        var showConfetti by remember { mutableStateOf(false) }
+
+        val scaleAnimation by animateFloatAsState(
+            targetValue = if (showContent) 1f else 0.3f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioMediumBouncy,
+                stiffness = Spring.StiffnessLow
+            ),
+            label = "scale"
+        )
+
+        val rotationAnimation by animateFloatAsState(
+            targetValue = if (showCheckmark) 0f else -180f,
+            animationSpec = tween(800, easing = FastOutSlowInEasing),
+            label = "rotation"
+        )
+
+        LaunchedEffect(isVisible) {
+            if (isVisible) {
+                showContent = true
+                delay(300)
+                showCheckmark = true
+                delay(200)
+                showConfetti = true
+                delay(2500) // Modal se cierra automáticamente después de 2.5 segundos
+                onDismiss()
+            }
+        }
+
+        Dialog(
+            onDismissRequest = onDismiss,
+            properties = DialogProperties(
+                dismissOnBackPress = true,
+                dismissOnClickOutside = true
+            )
+        ) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clickable { onDismiss() },
+                contentAlignment = Alignment.Center
+            ) {
+                Card(
+                    modifier = Modifier
+                        .scale(scaleAnimation)
+                        .padding(Dimensions.widthPercentage(8f)),
+                    colors = CardDefaults.cardColors(
+                        containerColor = lightGreen.copy(alpha = 0.95f)
+                    ),
+                    shape = RoundedCornerShape(Dimensions.widthPercentage(6f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 16.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(Dimensions.widthPercentage(6f))
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Spacer(modifier = Modifier.height(Dimensions.heightPercentage(3f)))
+
+                        // Texto principal
+                        Text(
+                            text = "¡COMPRA EXITOSA!",
+                            fontFamily = fuenteprincipal,
+                            fontSize = Dimensions.responsiveSp(24f),
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF2E7D32),
+                            textAlign = TextAlign.Center
+                        )
+
+                        Spacer(modifier = Modifier.height(Dimensions.heightPercentage(1f)))
+
+                        // Detalles del producto
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = darkGreen.copy(alpha = 0.1f)
+                            ),
+                            shape = RoundedCornerShape(Dimensions.widthPercentage(3f))
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .padding(Dimensions.widthPercentage(4f))
+                                    .fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                // Icono del producto
+                                Box(
+                                    contentAlignment = Alignment.Center,
+                                    modifier = Modifier
+                                        .size(Dimensions.widthPercentage(12f))
+                                        .clip(CircleShape)
+                                        .background(darkGreen.copy(alpha = 0.2f))
+                                ) {
+                                    Icon(
+                                        imageVector = productIcon,
+                                        contentDescription = productName,
+                                        tint = darkGreen,
+                                        modifier = Modifier.size(Dimensions.widthPercentage(7f))
+                                    )
+                                }
+
+                                Spacer(modifier = Modifier.width(Dimensions.widthPercentage(3f)))
+
+                                // Información del producto
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Text(
+                                        text = productName,
+                                        fontFamily = fuenteprincipal,
+                                        fontSize = Dimensions.responsiveSp(16f),
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.Black
+                                    )
+                                    Text(
+                                        text = productPrice,
+                                        fontFamily = fuenteprincipal,
+                                        fontSize = Dimensions.responsiveSp(14f),
+                                        color = Color(0xFF4f7123)
+                                    )
+                                }
+
+                                // Icono de añadido al inventario
+                                Icon(
+                                    imageVector = Icons.Default.Inventory,
+                                    contentDescription = "Añadido al inventario",
+                                    tint = Color(0xFF4CAF50),
+                                    modifier = Modifier.size(Dimensions.widthPercentage(6f))
+                                )
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(Dimensions.heightPercentage(2f)))
+
+                        // Mensaje adicional
+                        Text(
+                            text = "El artículo se ha añadido a tu inventario",
+                            fontFamily = fuenteprincipal,
+                            fontSize = Dimensions.responsiveSp(14f),
+                            color = Color(0xFF4f7123),
+                            textAlign = TextAlign.Center,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+
+                        Spacer(modifier = Modifier.height(Dimensions.heightPercentage(1f)))
+
+                        // Indicador de cierre automático
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Timer,
+                                contentDescription = "Timer",
+                                tint = Color.Gray,
+                                modifier = Modifier.size(Dimensions.widthPercentage(4f))
+                            )
+                            Spacer(modifier = Modifier.width(Dimensions.widthPercentage(1f)))
+                            Text(
+                                text = "Se cerrará automáticamente",
+                                fontFamily = fuenteprincipal,
+                                fontSize = Dimensions.responsiveSp(12f),
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 
 
 /**

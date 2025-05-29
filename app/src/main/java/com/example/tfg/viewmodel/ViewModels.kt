@@ -810,6 +810,9 @@ class JugadorEfectoViewModel(application: Application) : AndroidViewModel(applic
     private val dao        = db.jugadorEfectoDao()
     private val tarjetaDao = db.tarjetaDao()
     private val invTarjetaDao = db.inventarioTarjetaDao()
+    private var lastExchangedCard: Tarjeta? = null
+
+    fun getLastExchangedCard(): Tarjeta? = lastExchangedCard
     val allEfectos: LiveData<List<JugadorEfecto>> = dao.getAll()
 
 
@@ -878,6 +881,7 @@ class JugadorEfectoViewModel(application: Application) : AndroidViewModel(applic
 
 // 6) Escoger al azar y añadir al inventario
         val nueva = pool.random()
+        lastExchangedCard = nueva
         if (nueva.tipoTarjeta == "negocio"){
             invTarjetaDao.insert(
                 InventarioTarjeta(fkInventario = invId, fkTarjeta = nueva.id, cantidad = 1, duracion = 2)
