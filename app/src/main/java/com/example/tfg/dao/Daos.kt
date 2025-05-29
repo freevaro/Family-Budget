@@ -72,6 +72,15 @@ interface JugadorDao {
     // Primero, en JugadorDao (si no existe), para poder cargar un jugador por ID:
     @Query("SELECT * FROM jugador WHERE id = :id")
     suspend fun getById(id: Long): Jugador
+
+    @Query("SELECT dinero FROM jugador WHERE id = :id")
+    suspend fun getDineroById(id : Long) : Double
+    @Query("SELECT ingresos FROM jugador WHERE id = :id")
+    suspend fun getIngresosById(id : Long) : Double
+    @Query("SELECT gastos FROM jugador WHERE id = :id")
+    suspend fun getGastosById(id : Long) : Double
+    @Query("SELECT gastos FROM jugador WHERE id = :id")
+    suspend fun getGastosOriginalesById(id : Long) : Double
 }
 
 @Dao
@@ -370,6 +379,10 @@ interface JugadorEfectoDao {
     @Query("SELECT * FROM jugador_efectos WHERE fk_jugador = :jugadorId")
     fun getByJugador(jugadorId: Long): Flow<List<JugadorEfecto>>
 
+    /** Borra de la tabla todos los efectos de la lista */
+    @Delete
+    suspend fun deleteAll(effects: List<JugadorEfecto>)
+
     /**
      * Resta 1 a la duración de todos los efectos activos de todos los jugadores.
      */
@@ -498,6 +511,8 @@ interface PartidaDao {
 @Dao
 interface PartidaJugadorDao {
     @Query("SELECT * FROM partida_jugador") fun getAll(): LiveData<List<PartidaJugador>>
+    @Query("SELECT * FROM partida_jugador") fun getAllJugadores(): List<PartidaJugador>
+
     @Insert suspend fun insert(pj: PartidaJugador)
     @Update suspend fun update(pj: PartidaJugador)
     @Delete suspend fun delete(pj: PartidaJugador)
@@ -580,7 +595,3 @@ interface ResumenDiaDao {
     @Query("SELECT * FROM resumen_dia WHERE fk_jugador = :jugadorId")
     fun getAllByJugador(jugadorId: Long): LiveData<List<ResumenDia>>
 }
-
-
-
-

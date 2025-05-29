@@ -41,9 +41,9 @@ data class Jugador(
     val nombre: String,
     val dinero: Double,
     val ingresos: Double,
-    val ingresosOriginal : Double,
+    val ingresosOriginal : Int,
     val gastos: Double,
-    val gastosOriginal : Double
+    val gastosOriginal : Int
 )
 
 /**
@@ -209,7 +209,8 @@ data class JugadorEfecto(
     val ingresos: Double,
     val gastos: Double,
     val cantidad: Int,
-    val duracion: Int
+    val duracion: Int,
+    val valor_modificado : Int
 )
 
 

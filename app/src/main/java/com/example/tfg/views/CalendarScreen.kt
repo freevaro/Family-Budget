@@ -38,6 +38,7 @@ import com.example.tfg.R
 import com.example.tfg.viewmodel.EstadoTurno
 import com.example.tfg.viewmodel.EstadoTurno.diaNum
 import com.example.tfg.viewmodel.EstadoTurno.idJugador
+import com.example.tfg.viewmodel.EstadoTurno.jugador
 import com.example.tfg.viewmodel.ResumenDiaViewModel
 import com.example.tfg.viewmodel.TurnoManager
 
@@ -342,7 +343,7 @@ fun CalendarScreen(
                                 )
                                 Spacer(Modifier.width(4.dp))
                                 Text(
-                                    text = "Gastos: $80/día",
+                                    text = "Gastos: "+resumen?.gastos,
                                     fontFamily = fuenteprincipal,
                                     fontSize = Dimensions.responsiveSp(16f),
                                     color = Color.Black

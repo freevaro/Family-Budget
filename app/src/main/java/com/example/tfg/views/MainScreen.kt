@@ -332,7 +332,10 @@ fun MainScreen(
                         Box(
                             modifier = Modifier
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (allNamesFilled) darkGreen else darkGreen.copy(alpha = 0.5f))
+                                .background(if (allNamesFilled) Color(0xFF0A7A12) else Color(
+                                    0xFF313131
+                                )
+                                )
                                 .clickable(enabled = allNamesFilled) {
                                     partidaVM.empezarPartida(playerNames.take(playersCount))
                                     showPlayerDialog.value = false

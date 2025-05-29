@@ -3,6 +3,7 @@ package com.example.tfg.views
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.getValue
@@ -15,15 +16,18 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.CalendarToday
 
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.TrendingDown
 import androidx.compose.material.icons.filled.TrendingUp
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -59,6 +63,7 @@ import com.example.tfg.R
 import com.example.tfg.viewmodel.EstadoTurno
 import com.example.tfg.viewmodel.EstadoTurno.diaId
 import com.example.tfg.viewmodel.EstadoTurno.idJugador
+import com.example.tfg.viewmodel.EstadoTurno.nombre
 import com.example.tfg.viewmodel.JugadorViewModel
 import com.example.tfg.viewmodel.PartidaDatos.partidaId
 import com.example.tfg.viewmodel.PartidaJugadorViewModel
@@ -104,6 +109,7 @@ fun GameHomeScreen(
     musicEnabled: Boolean,
     onMusicToggle: (Boolean)-> Unit
 ) {
+    val showEndTurnDialog = remember { mutableStateOf(false) }
     val showDialog = remember { mutableStateOf(false) }
     val primaryGreen = Color(0xFF9CCD5C)
     val darkGreen = Color(0xFF6B9A2F)
@@ -288,11 +294,7 @@ fun GameHomeScreen(
 
             Button(
                 onClick = {
-                    uiScope.launch {
-                        resumenDiaVM.saveResumenTurnoActual()
-                        TurnoManager.next()
-                        shopVM.generarTiendaNueva(idJugador, diaId)
-                    }
+                    showEndTurnDialog.value = true // Cambia esta línea
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -430,6 +432,226 @@ fun GameHomeScreen(
             }
         }
     }
+    if (showEndTurnDialog.value) {
+        AlertDialog(
+            onDismissRequest = { showEndTurnDialog.value = false },
+            containerColor = lightGreen.copy(alpha = 0.9f),
+            shape = RoundedCornerShape(Dimensions.widthPercentage(4f)),
+            titleContentColor = Color.Black,
+            textContentColor = Color.Black,
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(Dimensions.widthPercentage(12f))
+                            .clip(CircleShape)
+                            .background(darkGreen.copy(alpha = 0.7f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CheckCircle,
+                            contentDescription = "Confirmar",
+                            tint = Color.White,
+                            modifier = Modifier.size(Dimensions.widthPercentage(6f))
+                        )
+                    }
+                    Spacer(modifier = Modifier.width(Dimensions.widthPercentage(3f)))
+                    Text(
+                        text = "Confirmar Turno",
+                        fontFamily = fuenteprincipal,
+                        fontSize = Dimensions.responsiveSp(24f),
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                }
+            },
+            text = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(Dimensions.widthPercentage(2f)),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "¿Estás seguro de que quieres finalizar tu turno?",
+                        fontFamily = fuenteprincipal,
+                        fontSize = Dimensions.responsiveSp(18f),
+                        color = Color.Black,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(bottom = Dimensions.heightPercentage(2f))
+                    )
+
+                    // Información del turno actual
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = darkGreen.copy(alpha = 0.3f)),
+                        shape = RoundedCornerShape(Dimensions.widthPercentage(3f))
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(Dimensions.widthPercentage(4f)),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "Resumen del turno",
+                                fontFamily = fuenteprincipal,
+                                fontSize = Dimensions.responsiveSp(16f),
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black,
+                                modifier = Modifier.padding(bottom = Dimensions.heightPercentage(1f))
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Jugador:",
+                                    fontFamily = fuenteprincipal,
+                                    fontSize = Dimensions.responsiveSp(14f),
+                                    color = Color.Black
+                                )
+                                Text(
+                                    text = nombre,
+                                    fontFamily = fuenteprincipal,
+                                    fontSize = Dimensions.responsiveSp(14f),
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Día:",
+                                    fontFamily = fuenteprincipal,
+                                    fontSize = Dimensions.responsiveSp(14f),
+                                    color = Color.Black
+                                )
+                                Text(
+                                    text = diaNum.toString(),
+                                    fontFamily = fuenteprincipal,
+                                    fontSize = Dimensions.responsiveSp(14f),
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Dinero:",
+                                    fontFamily = fuenteprincipal,
+                                    fontSize = Dimensions.responsiveSp(14f),
+                                    color = Color.Black
+                                )
+                                Text(
+                                    text = efectivo.toString(),
+                                    fontFamily = fuenteprincipal,
+                                    fontSize = Dimensions.responsiveSp(14f),
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Ingresos:",
+                                    fontFamily = fuenteprincipal,
+                                    fontSize = Dimensions.responsiveSp(14f),
+                                    color = Color.Black
+                                )
+                                Text(
+                                    text = ingresos.toString(),
+                                    fontFamily = fuenteprincipal,
+                                    fontSize = Dimensions.responsiveSp(14f),
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Text(
+                                    text = "Gastos:",
+                                    fontFamily = fuenteprincipal,
+                                    fontSize = Dimensions.responsiveSp(14f),
+                                    color = Color.Black
+                                )
+                                Text(
+                                    text = gastos.toString(),
+                                    fontFamily = fuenteprincipal,
+                                    fontSize = Dimensions.responsiveSp(14f),
+                                    fontWeight = FontWeight.Bold,
+                                    color = Color.Black
+                                )
+                            }
+                        }
+                    }
+                }
+            },
+            confirmButton = {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = Dimensions.widthPercentage(4f)),
+                    horizontalArrangement = Arrangement.spacedBy(Dimensions.widthPercentage(3f))
+                ) {
+                    // Botón Cancelar
+                    Button(
+                        onClick = { showEndTurnDialog.value = false },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF424242),
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(Dimensions.widthPercentage(3f)),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            "CANCELAR",
+                            fontFamily = fuenteprincipal,
+                            fontSize = Dimensions.responsiveSp(16f),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+
+                    // Botón Confirmar
+                    Button(
+                        onClick = {
+                            showEndTurnDialog.value = false
+                            uiScope.launch {
+                                TurnoManager.next()
+                                shopVM.generarTiendaNueva(idJugador, diaId)
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = darkGreen,
+                            contentColor = Color.White
+                        ),
+                        shape = RoundedCornerShape(Dimensions.widthPercentage(3f)),
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text(
+                            "CONFIRMAR",
+                            fontFamily = fuenteprincipal,
+                            fontSize = Dimensions.responsiveSp(16f),
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+        )
+    }
 }
 
 /**
@@ -558,4 +780,7 @@ fun PlayerPositionRow(
             color = if (isCurrentPlayer) darkGreen else darkGreen.copy(alpha = 0.7f)
         )
     }
+
 }
+
+
