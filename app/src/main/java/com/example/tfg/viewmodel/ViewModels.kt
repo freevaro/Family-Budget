@@ -337,7 +337,6 @@ object TurnoManager {
 
         // Lleva la cuenta de los turnos totales
         turno++
-        idJugador = turno.toLong()
 
         // Si acabamos de completar un ciclo completo, avanzamos el día
         gestionDia()
