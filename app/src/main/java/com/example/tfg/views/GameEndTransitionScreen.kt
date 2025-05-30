@@ -18,28 +18,19 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.example.tfg.R
-import com.example.tfg.views.Dia.dia
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-
-
-object Dia{
-    var dia : Int = 1
-}
-
 /**
- * Pantalla de transición que muestra el turno del jugador actual y el día
- * Se muestra durante 1 segundo antes de navegar a la pantalla de juego
+ * Pantalla de transición que se muestra al final de la partida
+ * Muestra "FIN DE LA PARTIDA" y "TENEMOS UN GANADOR"
+ * Se muestra durante 2 segundos antes de navegar a la pantalla de resultados finales
  *
- * @param playerName Nombre del jugador cuyo turno va a comenzar
- * @param currentDay Día actual del juego
  * @param navController Controlador de navegación
  * @param onTransitionComplete Callback que se ejecuta al completar la transición
  */
 @Composable
-fun TurnTransitionScreen(
-    playerName: String,
+fun GameEndTransitionScreen(
     navController: NavController,
     onTransitionComplete: () -> Unit = {}
 ) {
@@ -49,7 +40,6 @@ fun TurnTransitionScreen(
     val backgroundGreen = Color(0xFF6B9A2F)
     val lightGreen = Color(0xFF9CCD5C)
     val textColor = Color.Black
-
 
     // Animaciones
     val scale = remember { Animatable(0.5f) }
@@ -61,45 +51,45 @@ fun TurnTransitionScreen(
         launch {
             scale.animateTo(
                 targetValue = 1.2f,
-                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                animationSpec = tween(400, easing = FastOutSlowInEasing)
             )
             scale.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(200, easing = FastOutSlowInEasing)
+                animationSpec = tween(300, easing = FastOutSlowInEasing)
             )
         }
 
         launch {
             alpha.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                animationSpec = tween(400, easing = FastOutSlowInEasing)
             )
         }
 
-        // Esperar 1 segundo
-        delay(1000)
+        // Esperar 2 segundos (más tiempo para el final de partida)
+        delay(2000)
 
         // Animación de salida
         launch {
             alpha.animateTo(
                 targetValue = 0f,
-                animationSpec = tween(200, easing = FastOutSlowInEasing)
+                animationSpec = tween(300, easing = FastOutSlowInEasing)
             )
         }
 
         launch {
             scale.animateTo(
                 targetValue = 0.8f,
-                animationSpec = tween(200, easing = FastOutSlowInEasing)
+                animationSpec = tween(300, easing = FastOutSlowInEasing)
             )
         }
 
         // Esperar a que termine la animación de salida
-        delay(200)
+        delay(300)
 
-        // Navegar a la pantalla de juego
-        navController.navigate("pantalla_juego") {
-            popUpTo("turn_transition") { inclusive = true }
+        // Navegar a la pantalla de resultados finales
+        navController.navigate("pantalla_resultados_finales") {
+            popUpTo("game_end_transition") { inclusive = true }
         }
 
         onTransitionComplete()
@@ -122,32 +112,20 @@ fun TurnTransitionScreen(
                 .padding(horizontal = 32.dp)
         ) {
             Text(
-                text = "TURNO DE",
-                fontSize = 32.sp,
-                fontFamily = fuentePrincipal,
-                fontWeight = FontWeight.Bold,
-                color = textColor.copy(alpha = alpha.value),
-                textAlign = TextAlign.Center
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Text(
-                text = playerName.uppercase(),
-                fontSize = 48.sp,
+                text = "FIN DE LA PARTIDA",
+                fontSize = 36.sp,
                 fontFamily = fuentePrincipal,
                 fontWeight = FontWeight.Bold,
                 color = textColor.copy(alpha = alpha.value),
                 textAlign = TextAlign.Center,
-                lineHeight = 52.sp
+                lineHeight = 40.sp
             )
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // Nuevo texto para mostrar el día
             Text(
-                text = "Día $dia",
-                fontSize = 24.sp,
+                text = "TENEMOS UN GANADOR",
+                fontSize = 20.sp,
                 fontFamily = fuentePrincipal,
                 fontWeight = FontWeight.Normal,
                 color = textColor.copy(alpha = alpha.value * 0.8f),

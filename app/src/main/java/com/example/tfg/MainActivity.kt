@@ -138,7 +138,7 @@ class MainActivity : ComponentActivity() {
                         .systemBarsPadding(),
                     containerColor = Color(0xFF6B9A2F),
                     bottomBar = {
-                        if (currentScreen !in listOf("pantalla_principal", "loading", "pantalla_resultados_finales","turn_transition")) {
+                        if (currentScreen !in listOf("pantalla_principal", "loading", "pantalla_resultados_finales","turn_transition", "game_end_transition")) {
                             BottomNavigationBar(
                                 onNavigateToHome = { navController.navigate("pantalla_juego") },
                                 onNavigateToBusiness = { navController.navigate("pantalla_negocios") },
@@ -170,6 +170,8 @@ class MainActivity : ComponentActivity() {
                             currentScreen = "loading"
                             LoadingScreen(Modifier, navController)
                         }
+
+                        // Ruta corregida para la transición de turno
                         composable("turn_transition/{playerName}") { backStackEntry ->
                             val playerName = backStackEntry.arguments?.getString("playerName") ?: ""
                             currentScreen = "turn_transition"
@@ -178,6 +180,15 @@ class MainActivity : ComponentActivity() {
                                 navController = navController
                             )
                         }
+
+                        // Nueva ruta para la transición de fin de partida
+                        composable("game_end_transition") {
+                            currentScreen = "game_end_transition"
+                            GameEndTransitionScreen(
+                                navController = navController
+                            )
+                        }
+
                         composable("pantalla_principal") {
                             currentScreen = "pantalla_principal"
                             MainScreen(

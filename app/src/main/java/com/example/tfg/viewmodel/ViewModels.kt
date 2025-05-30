@@ -40,6 +40,7 @@ import com.example.tfg.viewmodel.PartidaDatos.listaJugadores
 import com.example.tfg.viewmodel.PartidaDatos.partidaId
 import com.example.tfg.viewmodel.TurnoManager.applyEffectTo
 import com.example.tfg.viewmodel.TurnoManager.players
+import com.example.tfg.views.Dia.dia
 import com.example.tfg.views.Resumen
 import com.example.tfg.views.Resumen.numDia
 import kotlinx.coroutines.Dispatchers
@@ -178,6 +179,7 @@ object TurnoManager {
     /** Inicializa los jugadores y carga todos los Días e Inventarios para el mes */
     suspend fun init(partidaId: Long, db: AppDatabase) {
         turno = 0
+        dia = 1
         val daoJ = db.jugadorDao()
         val daoD = db.diaDao()
         val daoI = db.inventarioDao()
@@ -307,6 +309,7 @@ object TurnoManager {
         // Si acabamos de envolver al primer jugador (antes estábamos en el último)
         if (index == 0) {
             diaNum++
+            dia++
 
             if (diaNum >= 32) {
                 // El juego ha terminado, no procesar más lógica de día

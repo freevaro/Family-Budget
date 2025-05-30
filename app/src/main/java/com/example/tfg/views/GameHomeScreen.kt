@@ -73,6 +73,7 @@ import com.example.tfg.viewmodel.ShopViewModel
 import com.example.tfg.viewmodel.TurnoManager
 import com.example.tfg.viewmodel.ResumenDiaViewModel
 import com.example.tfg.viewmodel.TurnoManager.playerId
+import com.example.tfg.views.Resumen.numDia
 import kotlinx.coroutines.launch
 
 /**
@@ -676,7 +677,8 @@ fun GameHomeScreen(
                                 TurnoManager.next()
                                 // Verificar si el juego ha terminado después del turno
                                 if (TurnoManager.isGameFinished()) {
-                                    navController.navigate("pantalla_resultados_finales") {
+                                    // Usar la nueva transición de fin de partida
+                                    navController.navigate("game_end_transition") {
                                         popUpTo("pantalla_juego") { inclusive = true }
                                     }
                                 } else {
