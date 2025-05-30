@@ -111,13 +111,7 @@ fun GameHomeScreen(
     musicEnabled: Boolean,
     onMusicToggle: (Boolean)-> Unit
 ) {
-    LaunchedEffect(TurnoManager.diaNum) {
-        if (TurnoManager.isGameFinished()) {
-            navController.navigate("pantalla_resultados_finales") {
-                popUpTo("pantalla_juego") { inclusive = true }
-            }
-        }
-    }
+
     val showEndTurnDialog = remember { mutableStateOf(false) }
     val showDialog = remember { mutableStateOf(false) }
     val primaryGreen = Color(0xFF9CCD5C)

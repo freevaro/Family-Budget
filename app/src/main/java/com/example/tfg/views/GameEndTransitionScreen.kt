@@ -24,7 +24,7 @@ import kotlinx.coroutines.launch
 /**
  * Pantalla de transición que se muestra al final de la partida
  * Muestra "FIN DE LA PARTIDA" y "TENEMOS UN GANADOR"
- * Se muestra durante 2 segundos antes de navegar a la pantalla de resultados finales
+ * Se muestra durante 5 segundos antes de navegar a la pantalla de resultados finales
  *
  * @param navController Controlador de navegación
  * @param onTransitionComplete Callback que se ejecuta al completar la transición
@@ -47,45 +47,45 @@ fun GameEndTransitionScreen(
 
     // Efecto de entrada y salida
     LaunchedEffect(Unit) {
-        // Animación de entrada
+        // Animación de entrada más lenta y dramática
         launch {
             scale.animateTo(
-                targetValue = 1.2f,
-                animationSpec = tween(400, easing = FastOutSlowInEasing)
+                targetValue = 1.3f,
+                animationSpec = tween(800, easing = FastOutSlowInEasing)
             )
             scale.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                animationSpec = tween(600, easing = FastOutSlowInEasing)
             )
         }
 
         launch {
             alpha.animateTo(
                 targetValue = 1f,
-                animationSpec = tween(400, easing = FastOutSlowInEasing)
+                animationSpec = tween(800, easing = FastOutSlowInEasing)
             )
         }
 
-        // Esperar 2 segundos (más tiempo para el final de partida)
-        delay(2000)
+        // Esperar 5 segundos (mucho más tiempo para que se vea bien)
+        delay(5000)
 
-        // Animación de salida
+        // Animación de salida más lenta
         launch {
             alpha.animateTo(
                 targetValue = 0f,
-                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                animationSpec = tween(600, easing = FastOutSlowInEasing)
             )
         }
 
         launch {
             scale.animateTo(
-                targetValue = 0.8f,
-                animationSpec = tween(300, easing = FastOutSlowInEasing)
+                targetValue = 0.7f,
+                animationSpec = tween(600, easing = FastOutSlowInEasing)
             )
         }
 
         // Esperar a que termine la animación de salida
-        delay(300)
+        delay(600)
 
         // Navegar a la pantalla de resultados finales
         navController.navigate("pantalla_resultados_finales") {
@@ -113,19 +113,19 @@ fun GameEndTransitionScreen(
         ) {
             Text(
                 text = "FIN DE LA PARTIDA",
-                fontSize = 36.sp,
+                fontSize = 40.sp, // Aumentado el tamaño
                 fontFamily = fuentePrincipal,
                 fontWeight = FontWeight.Bold,
                 color = textColor.copy(alpha = alpha.value),
                 textAlign = TextAlign.Center,
-                lineHeight = 40.sp
+                lineHeight = 44.sp
             )
 
-            Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(32.dp)) // Más espacio
 
             Text(
                 text = "TENEMOS UN GANADOR",
-                fontSize = 20.sp,
+                fontSize = 24.sp, // Aumentado el tamaño
                 fontFamily = fuentePrincipal,
                 fontWeight = FontWeight.Normal,
                 color = textColor.copy(alpha = alpha.value * 0.8f),
