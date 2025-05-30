@@ -54,6 +54,7 @@ object NumJugadores {
 /**
  * Pantalla principal del juego que actúa como menú de inicio.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("RememberReturnType")
 @Composable
 fun MainScreen(
@@ -318,7 +319,8 @@ fun MainScreen(
                                     onValueChange = { playerNames[index] = it },
                                     label = { Text("Nombre Jugador ${index + 1}", fontFamily = fuentePrincipal) },
                                     singleLine = true,
-                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp)
+                                    modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp),
+                                    colors = TextFieldDefaults.outlinedTextFieldColors(Color.Black)
                                 )
                             }
                         }

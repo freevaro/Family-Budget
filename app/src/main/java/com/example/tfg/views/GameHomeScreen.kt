@@ -304,20 +304,7 @@ fun GameHomeScreen(
 
             Button(
                 onClick = {
-//                    showEndTurnDialog.value = true // Cambia esta línea
-                    uiScope.launch {
-                        TurnoManager.next()
-                        // Verificar si el juego ha terminado después del turno
-                        if (TurnoManager.isGameFinished()) {
-                            navController.navigate("pantalla_resultados_finales") {
-                                popUpTo("pantalla_juego") { inclusive = true }
-                            }
-                        } else {
-                            shopVM.generarTiendaNueva(idJugador, diaId)
-                            // Lógica existente para cambio de turno normal
-//                            navController.navigate("turn_transition/${EstadoTurno.nombre}")
-                        }
-                    }
+                    showEndTurnDialog.value = true
                 },
                 modifier = Modifier
                     .fillMaxWidth()
