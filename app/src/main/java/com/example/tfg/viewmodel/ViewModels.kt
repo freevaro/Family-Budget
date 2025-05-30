@@ -144,6 +144,10 @@ object TurnoManager {
 
             "negocio" -> {
                 when {
+                    jugador.ingresos == 0.0 ->
+                        jugador.copy(ingresos = jugador.ingresosOriginal.toDouble())
+                    jugador.gastos == 0.0 ->
+                        jugador.copy(ingresos = jugador.gastosOriginal.toDouble())
                     effect.tipo == "positivo" && effect.gastos == 0.0 ->
                         jugador.copy(ingresos = jugador.ingresos * (1 + effect.ingresos / 100))
                     effect.tipo == "negativo" && effect.gastos == 0.0 ->
@@ -158,6 +162,7 @@ object TurnoManager {
             }
             else -> jugador
         }
+
 
         // 4) Persisto el jugador actualizado
         db_turno.jugadorDao().update(updated)
@@ -201,7 +206,7 @@ object TurnoManager {
      * Calcula los ingresos y costes de TODOS los negocios del jugador activo,
      * los suma al jugador en la BD y actualiza EstadoTurno y memoria interna.
      */
-    suspend fun procesarIngresosYCostesDeNegocios() {
+    suspend fun procesarIngresosYCostesDeNegocios(negocio : Negocio) {
         // 1) Leemos los detalles de los negocios
         val invId = EstadoTurno.inventarioId
         val detalles: List<InventarioNegocioWithNegocio> =
@@ -209,13 +214,20 @@ object TurnoManager {
                 .getConDetalle(invId)
                 .first()  // Flow → List
 
+//        // 2) Acumulamos ingresos y costes
+//        var ingresosTotal = 0.0
+//        var costesTotal   = 0.0
+//        detalles.forEach { item ->
+//            ingresosTotal += item.negocio.ingresos * item.invNegocio.cantidad
+//            costesTotal   += item.negocio.costeMantenimiento * item.invNegocio.cantidad
+//        }
+
         // 2) Acumulamos ingresos y costes
         var ingresosTotal = 0.0
         var costesTotal   = 0.0
-        detalles.forEach { item ->
-            ingresosTotal += item.negocio.ingresos * item.invNegocio.cantidad
-            costesTotal   += item.negocio.costeMantenimiento * item.invNegocio.cantidad
-        }
+        ingresosTotal += negocio.ingresos
+        costesTotal   += negocio.costeMantenimiento
+
 
         // 3) Recuperamos el jugador actual de la BD
         val jugador = db_turno.jugadorDao().getById(EstadoTurno.idJugador)
@@ -224,11 +236,11 @@ object TurnoManager {
         val actualizado = jugador.copy(
             ingresos = jugador.ingresos + ingresosTotal,
             gastos   = jugador.gastos   + costesTotal,
-            ingresosOriginal = ingresosTotal.toInt(),
-            gastosOriginal = costesTotal.toInt()
+            ingresosOriginal = jugador.ingresosOriginal + ingresosTotal.toInt(),
+            gastosOriginal = jugador.gastosOriginal + costesTotal.toInt()
         )
-        ingresosOriginal = ingresosTotal.toInt()
-        costesOriginal = costesTotal.toInt()
+        ingresosOriginal += ingresosTotal.toInt()
+        costesOriginal += costesTotal.toInt()
         db_turno.jugadorDao().update(actualizado)  // ← persiste en BD
 
         // 5) Actualizamos EstadoTurno para reflejar los nuevos valores
@@ -352,13 +364,13 @@ object TurnoManager {
                 if (effect.fkJugador == jugador.id){
                     if (effect.duracion == 0){
                         if (effect.tipo == "positivo" && effect.gastos == 0.0) {
-                            actualizado = jugador.copy(ingresos = jugador.ingresos - effect.valor_modificado.toDouble())
+                            actualizado = jugador.copy(ingresos = jugador.ingresosOriginal.toDouble())
                         } else if (effect.tipo == "negativo" && effect.gastos == 0.0) {
-                            actualizado = jugador.copy(ingresos = jugador.ingresos + effect.valor_modificado.toDouble())
+                            actualizado = jugador.copy(ingresos = jugador.ingresosOriginal.toDouble())
                         }else if(effect.tipo == "positivo" && effect.ingresos == 0.0){
-                            actualizado = jugador.copy(gastos = jugador.gastos + effect.valor_modificado.toDouble())
+                            actualizado = jugador.copy(gastos = jugador.gastosOriginal.toDouble())
                         }else if (effect.tipo == "negativo" && effect.ingresos == 0.0){
-                            actualizado = jugador.copy(gastos = jugador.gastos - effect.valor_modificado.toDouble())
+                            actualizado = jugador.copy(gastos = jugador.gastosOriginal.toDouble())
                         }
                     }
                 }

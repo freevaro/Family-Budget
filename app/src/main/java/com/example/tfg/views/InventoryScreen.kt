@@ -570,7 +570,6 @@ fun SettingsScreen(
                 },
                 text = {
                     if (withTar.tarjeta.nombre == "Tarjeta Negocio" || withTar.tarjeta.nombre == "Tarjeta Dinero" || withTar.tarjeta.nombre == "Tarjeta Aleatoria"){
-                        if (withTar.tarjeta.tipoTarjeta.isBlank()) {
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -678,8 +677,6 @@ fun SettingsScreen(
                                     )
                                 }
                             }
-                        }
-
                 },
                 confirmButton = {
                     val uiScope = rememberCoroutineScope()
@@ -713,16 +710,17 @@ fun SettingsScreen(
                                     aplicarEfectosNegocioActivos()
 
                                     // Get the newly generated card information
-                                    // You'll need to modify the reemplazarTarjeta function to return the new card
                                     val newCard = jugadorEfectoVM.getLastExchangedCard()
 
                                     if (newCard != null) {
+                                        // Determine the appropriate icon based on card type
                                         val icon = when {
                                             newCard.tipoTarjeta.equals("negocio", true) -> Icons.Default.Business
                                             newCard.tipoTarjeta.equals("dinero", true) -> Icons.Default.AttachMoney
                                             else -> Icons.Default.CardGiftcard
                                         }
 
+                                        // Create a descriptive effect text
                                         val effectDescription = when {
                                             newCard.tipoTarjeta.equals("dinero", true) -> {
                                                 if (newCard.tipoEfecto.equals("Positivo", true)) {
@@ -739,7 +737,16 @@ fun SettingsScreen(
                                             else -> newCard.nombreEfecto
                                         }
 
+                                        // Set the exchange card info and show the modal
                                         exchangedCard = Triple(newCard.nombre, icon, effectDescription)
+                                        showExchangeModal = true
+                                    } else {
+                                        // Fallback in case the card is null - create a generic exchange notification
+                                        exchangedCard = Triple(
+                                            "Nueva Tarjeta",
+                                            Icons.Default.CardGiftcard,
+                                            "Tarjeta canjeada exitosamente"
+                                        )
                                         showExchangeModal = true
                                     }
 

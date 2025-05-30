@@ -432,7 +432,7 @@ fun ShopScreen(
                             negocio.costeTienda = shopVM.aplicarDescuento(negocio.costeTienda, descuento)
                             val job = invNegVM.comprarNegocio(negocio)
                             job.join()
-                            procesarIngresosYCostesDeNegocios()
+                            procesarIngresosYCostesDeNegocios(negocio)
 
                             // Mostrar el modal de confirmación
                             purchasedProduct = Triple(
