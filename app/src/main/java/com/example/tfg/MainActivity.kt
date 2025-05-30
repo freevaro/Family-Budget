@@ -113,7 +113,7 @@ class MainActivity : ComponentActivity() {
                         "pantalla_principal" -> AudioManager.play(context, R.raw.mainscreen, musicEnabled)
                         "pantalla_juego",
                         "pantalla_tienda",
-                        "pantalla_resultados_finales" -> AudioManager.play(context, R.raw.mainscreen, musicEnabled)
+                        "pantalla_resultados_finales" -> AudioManager.play(context, R.raw.background, musicEnabled)
                         "pantalla_negocios",
                         "pantalla_calendario",
                         "pantalla_ajustes" -> AudioManager.play(context, R.raw.background, musicEnabled)

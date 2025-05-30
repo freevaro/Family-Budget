@@ -69,6 +69,20 @@ interface JugadorDao {
      WHERE pj.fk_partida = :partidaId
   """)
     suspend fun getPlayersForPartida(partidaId: Long): MutableList<Jugador>
+
+
+    @Query("""
+    SELECT j.* 
+      FROM jugador j 
+      INNER JOIN partida_jugador pj 
+        ON j.id = pj.fk_jugador 
+     WHERE pj.fk_partida = :partidaId
+  """)
+    fun getAllPlayers(partidaId : Long): LiveData<List<Jugador>>
+
+
+
+
     // Primero, en JugadorDao (si no existe), para poder cargar un jugador por ID:
     @Query("SELECT * FROM jugador WHERE id = :id")
     suspend fun getById(id: Long): Jugador
@@ -511,8 +525,6 @@ interface PartidaDao {
 @Dao
 interface PartidaJugadorDao {
     @Query("SELECT * FROM partida_jugador") fun getAll(): LiveData<List<PartidaJugador>>
-    @Query("SELECT * FROM partida_jugador") fun getAllJugadores(): List<PartidaJugador>
-
     @Insert suspend fun insert(pj: PartidaJugador)
     @Update suspend fun update(pj: PartidaJugador)
     @Delete suspend fun delete(pj: PartidaJugador)

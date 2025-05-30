@@ -110,6 +110,13 @@ fun GameHomeScreen(
     musicEnabled: Boolean,
     onMusicToggle: (Boolean)-> Unit
 ) {
+    LaunchedEffect(TurnoManager.diaNum) {
+        if (TurnoManager.isGameFinished()) {
+            navController.navigate("pantalla_resultados_finales") {
+                popUpTo("pantalla_juego") { inclusive = true }
+            }
+        }
+    }
     val showEndTurnDialog = remember { mutableStateOf(false) }
     val showDialog = remember { mutableStateOf(false) }
     val primaryGreen = Color(0xFF9CCD5C)
@@ -133,6 +140,8 @@ fun GameHomeScreen(
     LaunchedEffect(partidaId) {
         viewModel.setPartidaId(partidaId)
     }
+
+
 
     val players = remember(jugadores) {
         jugadores
@@ -295,7 +304,20 @@ fun GameHomeScreen(
 
             Button(
                 onClick = {
-                    showEndTurnDialog.value = true // Cambia esta línea
+//                    showEndTurnDialog.value = true // Cambia esta línea
+                    uiScope.launch {
+                        TurnoManager.next()
+                        // Verificar si el juego ha terminado después del turno
+                        if (TurnoManager.isGameFinished()) {
+                            navController.navigate("pantalla_resultados_finales") {
+                                popUpTo("pantalla_juego") { inclusive = true }
+                            }
+                        } else {
+                            shopVM.generarTiendaNueva(idJugador, diaId)
+                            // Lógica existente para cambio de turno normal
+//                            navController.navigate("turn_transition/${EstadoTurno.nombre}")
+                        }
+                    }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -665,12 +687,17 @@ fun GameHomeScreen(
                             showEndTurnDialog.value = false
                             uiScope.launch {
                                 TurnoManager.next()
-                                shopVM.generarTiendaNueva(idJugador, diaId)
-                                navController.navigate("turn_transition/$nombre") {
-                                    popUpTo("pantalla_juego") { inclusive = true }
+                                // Verificar si el juego ha terminado después del turno
+                                if (TurnoManager.isGameFinished()) {
+                                    navController.navigate("pantalla_resultados_finales") {
+                                        popUpTo("pantalla_juego") { inclusive = true }
+                                    }
+                                } else {
+                                    shopVM.generarTiendaNueva(idJugador, diaId)
+                                    // Lógica existente para cambio de turno normal
+                                    navController.navigate("turn_transition/${EstadoTurno.nombre}")
                                 }
                             }
-
                         },
                         colors = ButtonDefaults.buttonColors(
                             containerColor = darkGreen,

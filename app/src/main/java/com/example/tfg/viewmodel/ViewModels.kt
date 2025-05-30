@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.*
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 import androidx.room.withTransaction
 import com.example.tfg.AppDatabase
 import com.example.tfg.dao.ComidaDao
@@ -34,6 +35,7 @@ import com.example.tfg.viewmodel.EstadoTurno.idJugador
 import com.example.tfg.viewmodel.EstadoTurno.ingresos
 import com.example.tfg.viewmodel.EstadoTurno.ingresosOriginal
 import com.example.tfg.viewmodel.EstadoTurno.jugador
+import com.example.tfg.viewmodel.EstadoTurno.nombre
 import com.example.tfg.viewmodel.PartidaDatos.listaJugadores
 import com.example.tfg.viewmodel.PartidaDatos.partidaId
 import com.example.tfg.viewmodel.TurnoManager.applyEffectTo
@@ -175,6 +177,7 @@ object TurnoManager {
 
     /** Inicializa los jugadores y carga todos los Días e Inventarios para el mes */
     suspend fun init(partidaId: Long, db: AppDatabase) {
+        turno = 0
         val daoJ = db.jugadorDao()
         val daoD = db.diaDao()
         val daoI = db.inventarioDao()
@@ -391,18 +394,19 @@ object TurnoManager {
     /** Avanza al siguiente jugador y recarga EstadoTurno */
     suspend fun next() {
         if (players.isEmpty()) return
+        players[index]
         if (diaNum >= 32) {
             // El juego ha terminado, no avanzar más turnos
             return
         }
-        players[index]
-        cargarJugadoresLista()
         saveResumenTurnoActual()
+        cargarJugadoresLista()
         // Avanzamos índice de jugador (y ciclo)
         index = (index + 1) % players.size
 
         // Lleva la cuenta de los turnos totales
         turno++
+
 
         // Si acabamos de completar un ciclo completo, avanzamos el día
         gestionDia()
@@ -489,6 +493,10 @@ class DiaViewModel(application: Application) : AndroidViewModel(application) {
 class JugadorViewModel(application: Application) : AndroidViewModel(application) {
     private val dao = AppDatabase.getInstance(application).jugadorDao()
     val allJugadores: LiveData<List<Jugador>> = dao.getAll()
+    fun getPlayersPartida(partidaId : Long) : LiveData<List<Jugador>>{
+        val players = dao.getAllPlayers(partidaId)
+        return players
+    }
     fun insert(j: Jugador)   = viewModelScope.launch { dao.insert(j) }
     fun update()   = viewModelScope.launch { dao.update(EstadoTurno.jugador) }
     fun delete(j: Jugador)   = viewModelScope.launch { dao.delete(j) }
@@ -803,7 +811,7 @@ class PartidaStartViewModel(application: Application) : AndroidViewModel(applica
                 )
 
                 // d) Generar 31 días y relacionarlos con la partida
-                (1..31).forEach { diaNum ->
+                (1..32).forEach { diaNum ->
                     val diaId = diaDao.insert(
                         Dia(numeroDia = diaNum, fkJugador = jugadorId, fkMes = mesId)
                     )
