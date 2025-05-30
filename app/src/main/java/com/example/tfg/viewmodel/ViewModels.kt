@@ -305,6 +305,10 @@ object TurnoManager {
         if (index == 0) {
             diaNum++
 
+            if (diaNum >= 32) {
+                // El juego ha terminado, no procesar más lógica de día
+                return
+            }
 
             var cont = 0
             players.forEach { jugador ->
@@ -387,6 +391,10 @@ object TurnoManager {
     /** Avanza al siguiente jugador y recarga EstadoTurno */
     suspend fun next() {
         if (players.isEmpty()) return
+        if (diaNum >= 32) {
+            // El juego ha terminado, no avanzar más turnos
+            return
+        }
         players[index]
         cargarJugadoresLista()
         saveResumenTurnoActual()
@@ -402,6 +410,10 @@ object TurnoManager {
         // Recargamos el estado con el jugador/día/inventario actuales
         actualizarEstado()
 
+    }
+
+    fun isGameFinished(): Boolean {
+        return diaNum >= 32
     }
 
     /** Carga los IDs y el EstadoTurno desde los arrays según index y diaNum */

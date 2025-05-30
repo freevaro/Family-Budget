@@ -113,6 +113,7 @@ class MainActivity : ComponentActivity() {
                         "pantalla_principal" -> AudioManager.play(context, R.raw.mainscreen, musicEnabled)
                         "pantalla_juego",
                         "pantalla_tienda",
+                        "pantalla_resultados_finales" -> AudioManager.play(context, R.raw.mainscreen, musicEnabled)
                         "pantalla_negocios",
                         "pantalla_calendario",
                         "pantalla_ajustes" -> AudioManager.play(context, R.raw.background, musicEnabled)
@@ -137,7 +138,7 @@ class MainActivity : ComponentActivity() {
                         .systemBarsPadding(),
                     containerColor = Color(0xFF6B9A2F),
                     bottomBar = {
-                        if (currentScreen !in listOf("pantalla_principal", "loading")) {
+                        if (currentScreen !in listOf("pantalla_principal", "loading", "pantalla_resultados_finales","turn_transition")) {
                             BottomNavigationBar(
                                 onNavigateToHome = { navController.navigate("pantalla_juego") },
                                 onNavigateToBusiness = { navController.navigate("pantalla_negocios") },
@@ -157,6 +158,14 @@ class MainActivity : ComponentActivity() {
                     ) {
                         // Aquí se declaran todas las pantallas disponibles
                         // Se actualiza el valor de currentScreen en cada composable
+
+                        composable("pantalla_resultados_finales") {
+                            currentScreen = "pantalla_resultados_finales"
+                            FinalResultsScreen(
+                                navController = navController
+                            )
+                        }
+
                         composable("loading") {
                             currentScreen = "loading"
                             LoadingScreen(Modifier, navController)
