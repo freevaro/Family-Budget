@@ -1,8 +1,7 @@
 # Family Budget Game
 
-**Family Budget** es una aplicación de ejemplo desarrollada con **Jetpack Compose** para Android. Se trata de un prototipo de juego de gestión financiera familiar que muestra diferentes pantallas y funcionalidades básicas para interacción, navegación y datos de muestra.
+**Family Budget** es una aplicación desarrollada con **Jetpack Compose** para Android. Se trata de un videojuego con un diseño inspirado en juegos antiguos de movil, con el objetivo de ganar el maximo dinero posible de entre los jugadores de la partida.
 
-> ⚠️ **Datos de ejemplo**: todos los valores (negocios, productos, estadísticas, etc.) son datos planos de ejemplo y **no** representan los valores definitivos.
 
 ---
 
@@ -10,7 +9,6 @@
 
 - [Características](#características)
 - [Tecnologías](#tecnologías)
-- [Estructura de Pantallas](#estructura-de-pantallas)
 - [Instalación y Ejecución](#instalación-y-ejecución)
 - [Uso](#uso)
 - [Contribución](#contribución)
@@ -43,22 +41,6 @@
 
 ---
 
-## Estructura de Pantallas
-
-| Archivo                  | Descripción                                                                              |
-| ------------------------ | ---------------------------------------------------------------------------------------- |
-| `LoadingScreen.kt`       | Pantalla de carga con `LinearProgressIndicator`.                                         |
-| `MainScreen.kt`          | Pantalla de inicio con animación de iconos y dialog (`Dialog`).                          |
-| `GameHomeScreen.kt`      | Vista principal del juego: estadísticas y finalizar turno.                               |
-| `BusinessScreen.kt`      | Listado de negocios de ejemplo con `LazyVerticalGrid`.                                   |
-| `ShopScreen.kt`          | Catálogo de productos de ejemplo con filtros.                                            |
-| `CalendarScreen.kt`      | Vista de calendario mensual y resumen diario.                                            |
-| `SettingsScreen.kt`      | Ajustes de música y botón para finalizar partida.                                        |
-| `BottomNavigationBar.kt` | Composable de barra de navegación inferior.                                              |
-| `MainActivity.kt`        | `ComponentActivity` que contiene el `Scaffold` y el `NavHost` con transiciones animadas. |
-
----
-
 ## Instalación y Ejecución
 
 1. Clona el repositorio:
@@ -77,7 +59,6 @@
 - Tras la pantalla de carga, se accede a la pantalla principal.
 - Desde la pantalla principal, pulsa **Jugar** para entrar en el juego o **Opciones** para configurar música.
 - La **barra inferior** permite navegar entre Tienda, Negocios, Juego, Calendario y Ajustes (disponible tras la carga).
-- En cada sección encontrarás datos de ejemplo y la posibilidad de interactuar (e.g., finalizar turno o partida).
 
 ---
 
